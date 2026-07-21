@@ -2,33 +2,12 @@
 
 # FormGuard: AI-Powered Badminton E-Coaching Web App
 
-<div style="text-align: center">
+<div align="center">
   <img src="https://img.shields.io/badge/React.js-v19-1544b2" alt='React.js'>
   <img src="https://img.shields.io/badge/MediaPipe-Pose-5dbe4c" alt='MediaPipe'>
   <img src="https://img.shields.io/badge/LLM-AI_Feedback-c0c015" alt='LLM-AI_Feedback'>
 </div>
 <br>
-
-
-<details>
-  <summary><b>Table of Contents</b></summary>
-  <ol type="A">
-    <li><a style="color: white" href="#️-about-the-project">⁉️ About The Project</a></li>
-    <li><a style="color: white" href="#️-features">⚙️ Features</a></li>
-    <li>
-      <a style="color: white" href="#️-system-architecture">🏗️ System Architecture</a>
-      <ol style="disc">
-        <li><a style="color: white" href="#1-pose-detection-layer">Pose Detection Layer</a></li>
-        <li><a style="color: white" href="#2-kinematics-analysis-layer">Kinematics Analysis Layer</a></li>
-        <li><a style="color: white" href="#3-ai-feedback-layer">AI Feedback Layer</a></li>
-      </ol>
-    </li>
-    <li><a style="color: white" href="#️-tech-stack">🛠️ Tech Stack</a></li>
-    <li><a style="color: white" href="#-project-structure">📁 Project Structure</a></li>
-    <li><a style="color: white" href="#-getting-started">🚀 Getting Started</a></li>
-  </ol>
-</details>
-
 
 ## ⁉️ About The Project
 Formguard is an AI-powered e-coaching platform that utilizes MediaPipe Pose Estimation for pose detection and locally hosted Ollama Large Language Model (LLM) for the coaching feedback. The system extracts skeletal landmarks from and appying kinematic calculus (peak velocity, peak acceleration, & key joint angles), then passes all of this data to an LLM that compare it against an expert reference that provides a structured coaching response.
