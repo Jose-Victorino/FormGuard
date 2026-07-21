@@ -1,0 +1,55 @@
+@use '@/styles/util' as u;
+
+$color-loader: #0071e2;
+$color-bg-black: hsla(0, 0%, 0%, 0.2);
+$color-bg-white: hsla(0, 0%, 80%, 0.7);
+
+.loader{
+  position: relative;
+}
+.bar{
+  background-color: $color-bg-black;
+  width: 100%;
+
+  &::before{
+    content: '';
+    position: absolute;
+    background: $color-loader;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    border-radius: 30px;
+    animation: bar-moving 1s ease-in-out infinite;
+  }
+}
+@keyframes bar-moving {
+  50% {
+    width: 100%;
+  }
+
+  100% {
+    width: 0;
+    right: 0;
+    left: unset;
+  }
+}
+
+.circular{
+  font-size: u.$sz-14-16;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  width: fit-content;
+  border: 3px solid $color-bg-white;
+  border-top-color: $color-loader;
+  animation: circular-moving 0.5s ease-in-out infinite;
+}
+
+@keyframes circular-moving{
+  0%{
+    transform: rotate(0);
+  }
+  100%{
+    transform: rotate(360deg);
+  }
+}

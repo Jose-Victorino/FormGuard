@@ -1,0 +1,84 @@
+@use '@/styles/util' as u;
+@use "sass:color";
+
+.feedback{
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+}
+
+.card{
+  @include u.statCard;
+  gap: 20px;
+}
+
+.left .card{
+  position: sticky;
+  top: 20px;
+}
+
+.strength, .issue, .suggestion{
+  padding: 15px;
+  padding-left: 30px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+.strength{
+  background-color: u.get-bg-color(u.$color-success);
+  border-color: u.$color-success;
+}
+.issue{
+  background-color: u.get-bg-color(u.$color-error);
+  border-color: u.$color-error;
+}
+.suggestion{
+  background-color: u.get-bg-color(u.$color-primary-500);
+  border-color: u.$color-primary-500;
+}
+
+.badge-excellent, .badge-good, .badge-needs_improvement{
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.badge-excellent{
+  background-image: linear-gradient(
+    135deg,
+    color.adjust(u.$color-excellent, $lightness: -15%) 0%,
+    u.$color-excellent 100%,
+  );
+}
+.badge-good{
+  background-image: linear-gradient(
+    135deg,
+    color.adjust(u.$color-good, $lightness: -8%) 0%,
+    u.$color-good 100%
+  );
+}
+.badge-needs_improvement{
+  background-image: linear-gradient(
+    135deg,
+    u.$color-needs-improvement 0%,
+    color.adjust(u.$color-needs-improvement, $lightness: -4%) 45%,
+    color.adjust(u.$color-needs-improvement, $lightness: -8%) 100%
+  );
+}
+.skillBadge{
+  @include u.skillBadge();
+}
+
+
+@container main-content (width < 1200px){
+  .feedback{
+    grid-template-columns: 1fr 1.2fr;
+  }
+}
+@container main-content (width < 980px){
+  .feedback{
+    grid-template-columns: 1fr;
+  }
+  .left .card{
+    position: unset;
+    top: 20px;
+  }
+}

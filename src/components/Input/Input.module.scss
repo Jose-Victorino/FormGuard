@@ -1,0 +1,77 @@
+@use '@/styles/util' as u;
+@use './common.module' as c;
+
+.inputCont{
+  @include c.inputField;
+
+  &.span{
+    flex: 1;
+    min-width: 0;
+  }
+
+  .textLabel{
+    // color: color.mix(var(--ui-success) 10%, transparent, $method: oklch);
+    width: fit-content;
+    user-select: none;
+    pointer-events: none;
+    
+    &.labelInside{
+      background-color: var(--bg);
+      color: var(--color-label);
+      position: absolute;
+      top: calc(c.$padding + 0.75em);
+      left: calc(c.$padding + 1px);
+      transform: translateY(-50%);
+      z-index: 1;
+      transition: top 0.15s, left 0.15s, font-size 0.15s, padding 0.15s, transform 0.15s;
+    }
+  }
+  input{
+    &[type="file"]::file-selector-button{
+      background-color: u.$color-primary-600;
+      color: u.$color-neutral-50;
+      padding: 0.0625em 0.5em;
+      margin-right: 0.25em;
+      line-height: 1.5;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  }
+  textarea{
+    overflow: hidden auto;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: hsl(0, 0%, 95%);
+      margin-bottom: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsl(0, 0%, 53%);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsl(0, 0%, 43%);
+    }
+  }
+
+  &:has(input:focus-visible, input.focused, textarea:focus, textarea.focused) .textLabel.labelInside,
+  &.toTop .textLabel.labelInside{
+    top: 0;
+    left: c.$padding;
+    line-height: 1;
+    font-size: u.$sz-12-14;
+    transform: translateY(-50%) scale(0.95);
+    padding: 0 0.125em;
+  }
+}
+
+.required{
+  line-height: 1;
+  color: u.$color-error;
+}
+.errorMsg{
+  color: u.$color-error;
+  font-size: u.$sz-12-14;
+}

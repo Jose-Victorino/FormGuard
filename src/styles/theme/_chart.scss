@@ -1,0 +1,13 @@
+@use '@/styles/util' as u;
+
+:root{
+  --color-chart: #{u.$color-primary-500};
+
+  --color-serve: #{u.$color-serve};
+  --color-clear: #{u.$color-clear};
+  --color-smash: #{u.$color-smash};
+
+  --color-excellent: #{u.$color-excellent};
+  --color-good: #{u.$color-good};
+  --color-needs_improvement: #{u.$color-needs-improvement};
+}

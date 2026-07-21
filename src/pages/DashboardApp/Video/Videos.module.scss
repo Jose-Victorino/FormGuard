@@ -1,0 +1,14 @@
+@use '@/styles/util' as u;
+
+.videoList{
+  @include u.grid-repeat-column(auto-fill, 250px, 1fr);
+  gap: 20px;
+
+  @container dashboard-content (width < 720px){
+    gap: 15px;
+  }
+}
+
+.videoCard{
+  @include u.videosCard;
+}

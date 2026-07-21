@@ -1,0 +1,83 @@
+@use '@/styles/util' as u;
+
+.modalOverlay{
+  background-color: hsla(0, 0%, 0%, 0.6);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+
+  :global([data-theme=light]) & {
+    --bg-color: #{white};
+  }
+  :global([data-theme=dark]) & {
+    --bg-color: #{u.$color-neutral-900};
+  }
+}
+
+.modalContainer{
+  background-color: var(--bg-color, white);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+  max-height: 85vh;
+  max-height: 85dvh;
+  min-width: min(480px, calc(100% - 30px));
+  max-width: calc(100% - 30px);
+  box-shadow: 0 0 10px 1px hsla(0, 0%, 0%, 0.1);
+  border-radius: 6px;
+}
+
+.mainContent{
+  overflow-y: auto;
+  height: 100%;
+  padding: 15px;
+  
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track{
+    margin-block: 10px;
+  }
+  &::-webkit-scrollbar-thumb{
+    background-color: hsl(240, 5%, 73%);
+    height: 5px;
+    // border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover{
+    background-color: hsl(240, 5%, 65%);
+  }
+}
+
+.header, .setHeader{
+  display: flex;
+  padding: 15px 15px 0;
+}
+.header{
+  justify-content: space-between;
+}
+.setHeader{
+  justify-content: end;
+  min-height: 42px;
+}
+.footer{
+  padding: 10px 15px 15px;
+}
+
+
+.closeButton{
+  // position: absolute;
+  // top: 15px;
+  // right: 15px;
+  display: flex;
+  height: fit-content;
+  
+  svg{
+    fill: var(--color-text);
+    height: 18px;
+    width: 18px;
+  }
+}

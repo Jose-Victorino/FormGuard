@@ -1,0 +1,71 @@
+@use '@/styles/util' as u;
+@use "sass:color";
+@use "sass:map";
+@use "sass:list";
+@use "sass:meta";
+
+$allowed-vars: (
+  bg, bg-hover, sidenav-bg,
+  color-text, color-text-dimmed, color-text-inv,
+  color-border,
+
+  card-bg, color-chart-grid,
+  color-heatmap-border,
+);
+
+$themes: (
+  light: (
+    bg: #{u.$color-neutral-50},
+    bg-hover: #{u.$color-neutral-100},
+    sidenav-bg: 'white',
+  
+    color-text: #{u.$color-neutral-950},
+    color-text-dimmed: #{u.$color-neutral-600},
+    color-text-inv: #{u.$color-neutral-50},
+    color-border: #{u.$color-neutral-500},
+    
+    card-bg: 'white',
+    color-chart-grid: #{u.$color-neutral-200},
+
+    color-heatmap-border: #{u.$color-neutral-900},
+  ),
+  dark: (
+    bg: #{u.$color-neutral-900},
+    bg-hover: #{u.$color-neutral-800},
+    sidenav-bg: #{u.$color-neutral-800},
+    
+    color-text: #{u.$color-neutral-50},
+    color-text-dimmed: #{u.$color-neutral-300},
+    color-text-inv: #{u.$color-neutral-50},
+    color-border: #{u.$color-neutral-400},
+    
+    card-bg: #{u.$color-neutral-800},
+    color-chart-grid: #{u.$color-neutral-700},
+
+    color-heatmap-border: #{u.$color-neutral-100},
+  ),
+);
+
+@each $theme-name, $theme-map in $themes {
+  $css-vars: ();
+
+  @each $key, $value in $theme-map {
+    @if not list.index($allowed-vars, $key) {
+      @error "Invalid variable `#{$key}` in theme `#{$theme-name}`. Allowed: #{$allowed-vars}";
+    }
+
+    $css-vars: map.set($css-vars, $key, $value);
+  }
+
+  $selectors: if(
+    sass($theme-name == light):
+    ':root, [data-theme="#{$theme-name}"]';
+    else: '[data-theme="#{$theme-name}"]'
+  );
+
+  #{$selectors} {
+    @each $key, $value in $css-vars {
+      --#{$key}: #{$value};
+    }
+  }
+}

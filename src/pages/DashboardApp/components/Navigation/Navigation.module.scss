@@ -1,0 +1,99 @@
+@use '@/styles/util' as u;
+
+.sideNav{
+  background-color: var(--sidenav-bg);
+  position: sticky;
+  top: 0;
+  left: 0;
+  font-size: u.$sz-14-16;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 20px;
+  height: 100vh;
+  height: 100dvh;
+  height: 100svh;
+  width: clamp(180px, 35%, 240px);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+  transition: width 0.3s;
+
+  nav{
+    overflow: hidden;
+  }
+  &.collapse{
+    width: 3.5em;
+
+    .title{
+      opacity: 0;
+    }
+    .navLinks, .userNavLinks{
+      span{
+        opacity: 0;
+      }
+    }
+  }
+}
+
+.logoCont{
+  position: relative;
+  display: flex;
+  padding: 0.5em 1em;
+  display: flex;
+  justify-content: center;
+
+  img{
+    object-fit: contain;
+  }
+}
+.iconLogo{
+  width: 1.75em;
+}
+.textLogo{
+  width: 8.75em;
+}
+
+.collapseBtn{
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: flex;
+  transform: translate(50%, -50%);
+
+  svg{
+    fill: u.$color-neutral-400;
+  }
+}
+
+.title{
+  color: var(--color-text-dimmed);
+  padding-inline: 1em;
+  font-size: u.$sz-12-14;
+  transition: opacity 0.3s;
+}
+
+.navLinks, .userNavLinks{
+  li{
+    display: flex;
+  }
+  .navItem{
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    width: 100%;
+    padding: 0.75em 1em;
+
+    &.active{
+      font-weight: bold;
+      color: u.$color-primary-500;
+    }
+  }
+  span{
+    transition: opacity 0.3s;
+  }
+}
+
+@include u.breakpoint(tablet-s){
+  // .textLogo{
+  //   width: 120px;
+  // }
+}

@@ -1,0 +1,21 @@
+@use '@/styles/util' as u;
+
+.goBackbtn{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  & > div{
+    display: flex;
+    background: u.$color-neutral-100;
+    padding: 0.24em;
+    border-radius: 6px;
+  }
+  span{
+    white-space: nowrap;
+  }
+  &:hover > div{
+    background: u.$color-neutral-200;
+  }
+}

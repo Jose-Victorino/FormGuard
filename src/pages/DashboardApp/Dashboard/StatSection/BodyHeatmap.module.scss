@@ -1,0 +1,31 @@
+@use '@/styles/util' as u;
+
+.errorCell{
+  align-items: center;
+  justify-content: center;
+}
+
+.bodyHeatmap{
+  position: relative;
+  @include u.statCard;
+  min-height: 358px;
+}
+
+.bodySVG{
+  fill: u.$color-neutral-600;
+  // stroke: var(--color-heatmap-border);
+  stroke-width: 1;
+
+  & > * {
+    transition: fill 200ms ease;
+  }
+}
+.tooltip {
+  position: absolute;
+  top: 3rem;
+  left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 220px;
+}

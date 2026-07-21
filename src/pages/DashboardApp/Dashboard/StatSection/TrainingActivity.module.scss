@@ -1,0 +1,40 @@
+@use '@/styles/util' as u;
+
+.activity{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 15px;
+
+  p{
+    font-size: u.$sz-28-32;
+    font-weight: bold;
+  }
+  ol{
+    list-style-type: decimal;
+    padding-left: 20px;
+  }
+
+  .videos, .techniques, .streak, .trainingTime{
+    @include u.statCard;
+  }
+
+  @container dashboard-content (width < 980px){
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @container dashboard-content (width < 450px){
+    grid-template-columns: 1fr;
+  }
+}
+
+.videos{
+  color: var(--color-text-inv);
+  background-image: linear-gradient(135deg, u.$color-primary-700, u.$color-primary-600);
+}
+
+.errorCell{
+  @include u.statCard;
+  align-items: center;
+  grid-column: span 4;
+  min-height: 110px;
+}

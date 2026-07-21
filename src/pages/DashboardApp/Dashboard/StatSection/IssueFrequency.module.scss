@@ -1,0 +1,11 @@
+@use '@/styles/util' as u;
+
+.errorCell{
+  align-items: center;
+  justify-content: center;
+}
+
+.issue{
+  @include u.statCard;
+  min-height: 358px;
+}

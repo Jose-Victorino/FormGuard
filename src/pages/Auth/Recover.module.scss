@@ -1,0 +1,19 @@
+@use '@/styles/util' as u;
+
+.form{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+
+  h4{
+    text-align: center;
+  }
+}
+
+.hint{
+  color: u.$color-neutral-300;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: center;
+}

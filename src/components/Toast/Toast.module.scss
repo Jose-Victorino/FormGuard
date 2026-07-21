@@ -1,0 +1,163 @@
+@use '@/styles/util' as u;
+@use 'sass:color';
+
+$spacing: 15px;
+$color-success: hsl(120, 52%, 50%);
+$color-error: hsl(0, 52%, 50%);
+$color-warning: hsl(43, 79%, 55%);
+$color-info: hsl(223, 57%, 62%);
+$pad-block: 0.625em;
+$pad-inline: 1em;
+
+.toastRoot{
+  pointer-events: none;
+}
+
+.region{
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing;
+  pointer-events: none;
+  z-index: 101;
+  max-width: calc(100vw - #{$spacing} * 2);
+}
+
+.posTopRight{
+  top: $spacing;
+  right: $spacing;
+  --toast-enter-from-x: calc(100% + #{$spacing});
+  --toast-enter-from-y: 0;
+}
+.posTopCenter{
+  top: $spacing;
+  left: 50%;
+  transform: translateX(-50%);
+  --toast-enter-from-x: 0;
+  --toast-enter-from-y: calc(-100% - #{$spacing});
+}
+.posTopLeft{
+  top: $spacing;
+  left: $spacing;
+  --toast-enter-from-x: calc(-100% - #{$spacing});
+  --toast-enter-from-y: 0;
+}
+.posBottomRight{
+  bottom: $spacing;
+  right: $spacing;
+  flex-direction: column-reverse;
+  --toast-enter-from-x: calc(100% + #{$spacing});
+  --toast-enter-from-y: 0;
+}
+.posBottomCenter{
+  bottom: $spacing;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column-reverse;
+  --toast-enter-from-x: 0;
+  --toast-enter-from-y: calc(100% + #{$spacing});
+}
+.posBottomLeft{
+  bottom: $spacing;
+  left: $spacing;
+  flex-direction: column-reverse;
+  --toast-enter-from-x: calc(-100% - #{$spacing});
+  --toast-enter-from-y: 0;
+}
+
+.toastSlot{
+  font-size: u.$sz-14-16;
+  display: flex;
+  min-height: calc(#{$pad-block} * 2 + 1.5em * 1.5);
+  max-height: calc(#{$pad-block} * 2 + 1.5em * 3);
+  transition: max-height 0.15s ease-in;
+
+  &.slotUnmount{
+    max-height: 0;
+  }
+}
+
+.default{
+  background-color: white;
+  color: black;
+  
+  svg{ fill: black }
+}
+.success{
+  background-color: $color-success;
+  color: white;
+
+  svg{ fill: white }
+}
+.error{
+  background-color: $color-error;
+  color: white;
+  
+  svg{ fill: white }
+}
+.warning{
+  background-color: $color-warning;
+  color: white;
+  
+  svg{ fill: white }
+}
+.info{
+  background-color: $color-info;
+  color: white;
+  
+  svg{ fill: white }
+}
+.toastItem{
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: $pad-block $pad-inline;
+  width: 280px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px hsla(0, 0%, 0%, 0.1);
+  pointer-events: auto;
+  animation: in 0.2s ease-in-out;
+  transform: translate(0, 0);
+  
+  &.unmount{
+    transform: translate(var(--toast-enter-from-x), var(--toast-enter-from-y));
+    animation: out 0.2s ease-in-out;
+  }
+}
+.title{
+  font-weight: bold;
+}
+.message{
+  width: calc(100% - 0.75em);
+}
+
+@keyframes in {
+  from{
+    transform: translate(var(--toast-enter-from-x), var(--toast-enter-from-y));
+  }
+  to{
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes out {
+  from{
+    transform: translate(0, 0);
+  }
+  to{
+    transform: translate(var(--toast-enter-from-x), var(--toast-enter-from-y));
+  }
+}
+
+.closeBtn{
+  position: absolute;
+  top: 0.375em;
+  right: 0.375em;
+  display: flex;
+  height: fit-content;
+
+  svg{
+    height: 16px;
+    width: 16px;
+  }
+}

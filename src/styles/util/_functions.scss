@@ -1,0 +1,32 @@
+@use '../util/variables' as v;
+@use 'sass:color';
+@use 'sass:map';
+@use 'sass:meta';
+
+$weights: (
+  bg: 15%,
+  border: 25%,
+);
+
+@function get-bg-color($color){
+  @return color.mix($color, transparent, $weight: map.get($weights, bg))
+};
+
+@function get-border-color($color){
+  @return color.mix($color, transparent, $weight: map.get($weights, border))
+};
+
+@function get-status-color($name, $fallback) {
+  $vars: meta.module-variables("v");
+  $key: "color-#{$name}";
+
+  @if map.has-key($vars, $key) {
+    $value: map.get($vars, $key);
+
+    @if meta.type-of($value) == "color" {
+      @return $value;
+    }
+  }
+
+  @return $fallback;
+}

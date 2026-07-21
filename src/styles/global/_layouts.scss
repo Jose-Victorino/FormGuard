@@ -1,0 +1,24 @@
+
+
+.res-flex-row{
+  container: res-row / inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap, 20px);
+
+  & > * {
+    flex: 1 1 calc((100% / var(--cols, 3)) - var(--gap, 20px));
+  }
+
+  @container res-row (max-width: 780px) {
+    & > * {
+      flex-basis: 100%;
+    }
+  }
+
+  @for $i from 1 through 5 {
+    &.res-col-#{$i} {
+      --cols: #{$i};
+    }
+  }
+}

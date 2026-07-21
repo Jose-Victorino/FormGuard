@@ -1,0 +1,9 @@
+@use '@/styles/util' as u;
+
+.sessionComposition{
+  @include u.statCard;
+}
+
+.chartCont{
+  height: 90px;
+}

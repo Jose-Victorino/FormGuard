@@ -1,0 +1,198 @@
+@use 'variables' as *;
+@use "sass:list";
+@use "sass:map";
+@use 'sass:math';
+@use 'sass:string';
+@use 'sass:meta';
+
+@mixin statCard{
+  background-color: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 0 7px 0px hsla(0, 0%, 0%, 10%);
+}
+
+@mixin videosCard{
+  background-color: var(--card-bg);
+  font-size: $sz-14-16;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: $ds-subnav;
+  
+  .thumbnailCont{
+    position: relative;
+    display: flex;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    
+    div{
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      border-radius: 3px;
+      background-color: white;
+    }
+  }
+  img{
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+  }
+
+  .content{
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em 1em;
+    gap: 10px;
+  }
+
+  .date{
+    font-size: $sz-12-14;
+    color: var(--color-text-dimmed);
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+@mixin skillBadge{
+  :global([data-theme=light]) & {
+    background-color: $color-neutral-100;
+  }
+  :global([data-theme=dark]) & {
+    background-color: $color-neutral-700;
+  }
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+@mixin toggle-switch{
+  display: flex;
+
+  box-shadow: inset 0 0 0 1px $color-primary-600;
+  overflow: hidden;
+  border-radius: 6px;
+  width: fit-content;
+
+  &:not(.on) div:first-child,
+  &.on div:last-child{
+    background-color: $color-primary-600;
+    color: white;
+
+    svg{
+      stroke: white;
+    }
+  }
+
+  div{
+    display: flex;
+    padding: 0.5em 0.875em;
+  }
+}
+
+
+@mixin pos-absolute($x: false, $y: false){
+  position: absolute;
+
+  @if $x { right: 50% }
+  @if $y { bottom: 50% }
+
+  @if $x and $y {
+    transform: translate(50%, 50%);
+  } @else if $x {
+    transform: translateX(50%);
+  } @else if $y {
+    transform: translateY(50%);
+  }
+}
+
+@mixin dim-clamp($dim, $min, $default, $max){
+  @if not list.index(width height, $dim) {
+    @error "dim must be height or width";
+  }
+  
+  #{$dim}: $default;
+  min-#{$dim}: $min;
+  max-#{$dim}: $max;
+}
+
+@mixin box-shadow($top, $left, $blur, $color){
+  box-shadow: $left $top $blur $color;
+}
+
+@mixin drop-shadow($top, $left, $blur, $color){
+  filter: drop-shadow($left $top $blur $color);
+}
+
+@mixin grid-repeat-column($repeat, $width, $mobile-template: 1fr) {    
+  @if not(meta.type-of($repeat) == number or $repeat == auto-fit or $repeat == auto-fill){
+    @error "Invalid value for $repeat. Use a number, auto-fit, or auto-fill.";
+  }
+
+  display: grid;
+  grid-template-columns: repeat(#{$repeat}, minmax($width, 1fr));
+
+  @media (width < 560px){
+    grid-template-columns: $mobile-template;
+  }
+}
+
+@mixin input(){
+  background-color: $color-neutral-50;
+  padding: 0.75em;
+  border: 1px solid $color-neutral-300;
+  border-radius: 6px;
+
+  &:focus-visible{
+    border-color: $color-neutral-950;
+  }
+}
+
+@mixin errorMsg{
+  color: $color-error;
+  font-size: 0.85rem;
+}
+
+@mixin input-hide-spinner(){
+  &[type="number"]{
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+}
+@mixin fs-fluid($min-vw, $max-vw, $min-value, $max-value){
+  $factor: math.div(1, ($max-vw - $min-vw)) * ($max-value - $min-value);
+  $calc-value: string.unquote('#{$min-value - ($min-vw * $factor)} + #{100vw * $factor}');
+
+  font-size: $min-value;
+  font-size: clamp(#{$min-value}, #{$calc-value}, #{$max-value});
+}
+
+$breakpoints: (
+  laptop-l: 1400px,
+  laptop-s: 1200px,
+  tablet-l: 980px,
+  tablet-s: 720px,
+  mobile-l: 560px,
+  mobile-s: 450px,
+);
+
+@mixin breakpoint($size, $operation: less){
+  @if not ($operation == greater or $operation == less) {
+    @error "Invalid operation: #{$operation}";
+  }
+  @if $operation == greater{
+    @media (width > map.get($breakpoints, $size)){
+      @content
+    }
+  }
+  @else{
+    @media (width <= map.get($breakpoints, $size)){
+      @content
+    }
+  }
+}

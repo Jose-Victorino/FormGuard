@@ -1,0 +1,139 @@
+@use '@/styles/util' as u;
+
+*, *::before, *::after {
+  text-decoration: none;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+html{
+  &[data-theme=dark]{
+    color-scheme: dark;
+  }
+  // scrollbar-gutter: stable;
+}
+body{
+  background-color: var(--bg);
+  color: var(--color-text);
+  font-family: u.$font1;
+  width: 100%;
+  // height: 100vh;
+  // height: 100dvh;
+  // height: 100svh;
+  interpolate-size: allow-keywords;
+  overflow-x: hidden;
+  scroll-behavior: auto;
+  // color-scheme: dark;
+}
+// text tags
+h1{
+  font-size: u.$sz-48-64;
+  line-height: 1.25;
+}
+h2{
+  font-size: u.$sz-32-48;
+}
+h3{
+  font-size: u.$sz-28-32;
+}
+h4{
+  font-size: u.$sz-24-28;
+}
+h5{
+  font-size: u.$sz-20-24;
+}
+h1, h2, h3, h4, h5, h6{
+  text-wrap: balance;
+}
+h6, p, a, b, li, th, td, button,
+input, textarea, select, option, label{
+  font-size: u.$sz-14-16;
+}
+h2, h3, h4, h5, h6, p, a, li, th, td,
+input, textarea, select, option, label{
+  line-height: 1.5;
+}
+p, li, figcaption{
+  text-wrap: pretty;
+}
+a{
+  font-family: inherit;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+code, pre, kbd, samp{
+  font-family: monospace;
+}
+b, strong{
+  font-weight: bolder;
+}
+blockquote, q{
+  quotes: none;
+}
+
+// button
+button{
+  font: inherit;
+  color: var(--color-text);
+  background-color: transparent;
+  border: none;
+
+  &[type=button]:not(:disabled),
+  &[type=reset]:not(:disabled),
+  &[type=submit]:not(:disabled),
+  &:not(:disabled){
+    cursor: pointer;
+  }
+}
+
+// list
+ol, ul{ list-style: none; }
+
+hr{
+  border: none;
+  border-bottom: 1px solid u.$color-neutral-300;
+}
+
+// table
+table{
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// form tags
+input, textarea, select, option{
+  font-family: inherit;
+}
+:is(input, textarea, select, button):focus-visible{
+  outline: none;
+}
+input, textarea{
+  // color: var(--color-text);
+  outline: none;
+  border: none;
+}
+textarea{
+  --padding: 0px;
+
+  padding: var(--padding);
+  padding-inline: calc(var(--padding) + calc((1lh - 2ex) / 2));
+  height: calc(4lh + 2 * (var(--padding) + 2px));
+  min-height: calc(2lh + 2 * (var(--padding) + 2px));
+  max-height: calc(8lh + 2 * (var(--padding) + 2px));
+  width: 100%;
+  resize: vertical;
+  border: none;
+}
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="image"],
+input[type="url"]{
+  cursor: pointer;
+}
+
+.react-loading-skeleton {
+  line-height: unset !important;
+}

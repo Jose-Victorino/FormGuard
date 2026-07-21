@@ -1,0 +1,25 @@
+@use '@/styles/util' as u;
+
+.authWrapper{
+  display: flex;
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  height: 100svh;
+}
+
+.bg{
+  background: u.$color-neutral-700;
+  display: flex;
+  justify-content: center;
+  flex: 0 0 60%;
+}
+
+.auth{
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 0 0 40%;
+  padding: 20px;
+}

@@ -1,0 +1,34 @@
+@use '@/styles/util' as u;
+
+.dashboardLayout{
+  container: dashboard-content / inline-size;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 15px;
+  padding: 20px;
+
+  @include u.breakpoint(mobile-l){
+    padding: 15px;
+  }
+}
+
+.newRecording{
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  font-size: u.$sz-14-16;
+  display: flex;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 12px 0 hsla(0, 0%, 0%, 20%);
+
+  button{
+    display: flex;
+    background-color: u.$color-secondary-500;
+    padding: 0.75em;
+  }
+  svg{
+    fill: u.$color-neutral-100;
+  }
+}

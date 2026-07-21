@@ -1,0 +1,16 @@
+@use '@/styles/util' as u;
+
+.form{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+
+  h4{
+    text-align: center;
+  }
+}
+
+.errorMsg{
+  @include u.errorMsg;
+}

@@ -1,0 +1,61 @@
+@use '@/styles/util' as u;
+@use './common.module' as c;
+
+.arrowIcon{
+  pointer-events: none;
+
+  svg{
+    fill: var(--color-text);
+    height: 1em;
+    width: 1em;
+  }
+}
+.searchInput{
+  width: 5%;
+}
+.selectedOption{
+  background-color: var(--color-dropdown);
+  gap: 0.25em;
+  padding: 0 0.5em;
+  border-radius: 0.25em;
+
+  svg{
+    height: 0.75em;
+    width: 0.75em;
+  }
+}
+
+.optionsList{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: translateY(100%);
+  background-color: var(--color-dropdown);
+  display: flex;
+  padding: 0.25em;
+  max-height: calc(0.5em + (2em * 4) + (5px * (4 - 1)));
+  width: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px var(--color-border);
+  z-index: 2;
+  overflow: hidden auto;
+
+  li{
+    display: flex;
+    padding: 0.25em 0.5em;
+    
+    &.option{
+      white-space: nowrap;
+      border-radius: 0.25em;
+      cursor: pointer;
+
+      &:hover{
+        background-color: var(--color-dropdown-hover);
+      }
+      &.selected{
+        background-color: c.$blue;
+        color: var(--color-text-inv);
+      }
+    }
+  }
+}

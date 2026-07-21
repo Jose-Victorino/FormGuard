@@ -1,0 +1,72 @@
+@use "sass:list";
+
+$font1: 'Montserrat', sans-serif;
+$font2: 'Lato', sans-serif;
+
+// Size Clamps (560px - 720px)
+$sz-48-64: clamp(48px, -0.5rem + 10vw, 64px);
+$sz-32-48: clamp(32px, -1.5rem + 10vw, 48px);
+$sz-28-32: clamp(28px, 0.875rem + 2.5vw, 32px);
+$sz-24-28: clamp(24px, 0.625rem + 2.5vw, 28px);
+$sz-20-24: clamp(20px, 0.375rem + 2.5vw, 24px);
+$sz-16-20: clamp(16px, 0.125rem + 2.5vw, 20px);
+$sz-14-16: clamp(14px, 0.4375rem + 1.25vw, 16px);
+$sz-12-16: clamp(12px, -0.25rem + 2.8571vw, 16px);
+$sz-12-14: clamp(12px, 0.3125rem + 1.25vw, 14px);
+$sz-10-12: clamp(10px, 0.1875rem + 1.25vw, 12px);
+
+// grayscale
+$color-neutral-50:  #f3f4f7;
+$color-neutral-100: #e4e5e7;
+$color-neutral-200: #cfd1d3;
+$color-neutral-300: #b0b2b5;
+$color-neutral-400: #93959a;
+$color-neutral-500: #77797e;
+$color-neutral-600: #5b5d62;
+$color-neutral-700: #46484e;
+$color-neutral-800: #282a33;
+$color-neutral-900: #191b1f;
+$color-neutral-950: #080a0c;
+
+// palette
+$color-primary-50:  #DEF5FF;
+$color-primary-100: #C2DBFF;
+$color-primary-200: #94B7FF;
+$color-primary-300: #779DF3;
+$color-primary-400: #6989D2;
+$color-primary-500: #416BD8;
+$color-primary-600: #2F55C0;
+$color-primary-700: #1C3DA5;
+$color-primary-800: #081B7D;
+$color-primary-900: #03005B;
+$color-primary-950: #070037;
+
+$color-secondary-50:  #C9FFC6;
+$color-secondary-100: #AEF6AB;
+$color-secondary-200: #8DE589;
+$color-secondary-300: #69D366;
+$color-secondary-400: #3DC23D;
+$color-secondary-500: #00A500;
+$color-secondary-600: #008600;
+$color-secondary-700: #006500;
+$color-secondary-800: #004500;
+$color-secondary-900: #002600;
+$color-secondary-950: #000A00;
+
+$color-excellent: $color-secondary-300;
+$color-good: #F0D02D;
+$color-needs-improvement: #F8A220;
+
+$color-serve: hsl(187, 72%, 55%);
+$color-clear: $color-secondary-400;
+$color-smash: $color-primary-500;
+
+$color-success: #54c954;
+$color-warning: #ead04d;
+$color-error: #c95454;
+$color-link: hsl(211, 88%, 50%);
+
+// gradient
+$gr-light-gray: linear-gradient(120deg, $color-neutral-300 30%, $color-neutral-200 100%);
+
+$ds-subnav: 0 0 7px 0 hsla(0, 0%, 0%, 20%);
