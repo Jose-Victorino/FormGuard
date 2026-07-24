@@ -46,6 +46,7 @@ $size: (
   gap: 0.5em;
   padding: 0.625em 1em;
   height: fit-content;
+  line-height: 1.25;
 
   &:disabled{
     cursor: not-allowed;
@@ -72,14 +73,12 @@ $size: (
   @include btn-base;
   @include setColor(var(--color-text-inv));
   background-color: var(--bg-color);
-  border: 1px solid var(--bg-color);
 
   &:disabled{
     opacity: 0.8;
   }
   &:hover:not(:disabled){
     background-color: var(--bg-hover);
-    border-color: var(--bg-hover);
   }
   &.color-dark{
     @include setColor($textDark);
@@ -89,14 +88,14 @@ $size: (
 .btn-secondary{
   @include btn-base;
   @include setColor(var(--color-text));
-  border: 1px solid var(--bg-color);
+  box-shadow: inset 0 0 0 1px var(--bg-color);
   
   &:disabled{
     opacity: 0.8;
   }
   &:hover:not(:disabled){
     background-color: var(--bg-hover);
-    border-color: var(--bg-hover);
+    box-shadow: inset 0 0 0 1px var(--bg-hover);
     @include setColor($textLight);
 
     &.color-dark{
@@ -111,7 +110,6 @@ $size: (
 .btn-tertiary{
   @include btn-base;
   @include setColor(var(--color-text));
-  border: 1px solid transparent;
   
   &:disabled{
     opacity: 0.8;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -218,7 +218,7 @@ function BodyHeatmap() {
 
   const userId = session?.user?.id
 
-  const { data: { data: rawSessions } = {}, isLoading, isError, refetch } = dashboardHooks.getIssueHeatmap(userId, { technique })
+  const { data: { data: rawSessions } = {}, isLoading, isError, refetch } = sessionHooks.getIssueHeatmap(userId, { technique })
   const sessionsData = rawSessions ?? []
 
   const { heatmap, bodyPartDetails } = useMemo(() => {

@@ -2,10 +2,11 @@ import { useLayoutEffect } from 'react'
 import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, LineController, BarController, Tooltip, Legend, Colors } from 'chart.js'
 import { useGlobal } from '@/context/Global'
 import { UserAuth } from '@/hooks/useAuth'
+import { sessionHooks } from '@/service/crudService'
+import Skeleton from 'react-loading-skeleton'
 
 import useDocumentTitle from '@/hooks/useDocumentTitle'
 
-import { dashboardHooks } from './StatSection/api.hooks'
 import TrainingActivity from './StatSection/TrainingActivity'
 import RecentSessions from './StatSection/RecentSessions'
 import BodyHeatmap from './StatSection/BodyHeatmap'
@@ -14,10 +15,9 @@ import CommonIssue from './StatSection/CommonIssue'
 import IssueFrequency from './StatSection/IssueFrequency'
 import Performance from './StatSection/Performance'
 import SessionComposition from './StatSection/SessionComposition'
+import Button from '@/components/Button/Button'
 
 import s from './Dashboard.module.scss'
-import Button from '@/components/Button/Button'
-import Skeleton from 'react-loading-skeleton'
 
 Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, LineController, BarController, Tooltip, Legend, Colors)
 
@@ -50,12 +50,11 @@ function Dashboard() {
     data: { data: overviewData } = {},
     isLoading: isOverviewLoading,
     isError: isOverviewError,
-  } = dashboardHooks.getTrainingOverview(userId)
+  } = sessionHooks.getTrainingOverview(userId)
 
   // Treat "no videos yet" as a new user; if the check fails, fall back to the
   // normal dashboard so each StatSection can surface its own error/retry state.
-  // const newUser = !isOverviewLoading && !isOverviewError && (overviewData?.total_videos ?? 0) === 0
-  const newUser = false
+  const isNewUser = !isOverviewLoading && !isOverviewError && (overviewData?.total_videos ?? 0) === 0
 
   useLayoutEffect(() => {
     setChartDefaults()
@@ -89,7 +88,7 @@ function Dashboard() {
     </>
   )
 
-  return newUser ? (
+  return isNewUser ? (
     <div className='flex-col a-center gap-30'>
       <h3>Start your first session</h3>
       <Button

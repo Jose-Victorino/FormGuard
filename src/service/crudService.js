@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { useQuery } from '@tanstack/react-query'
 import { createCRUDHooks } from './tanstackHooks'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -6,6 +7,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY
 const SUPABASE_BUCKET = import.meta.env.VITE_SUPABASE_BUCKET
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
 /**
  * @typedef {import('@supabase/supabase-js').PostgrestQueryBuilder} PostgrestQueryBuilder
  */
@@ -25,21 +27,20 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
  *  count?: string | null,
  *  page?: number | null,
  *  pageSize?: number,
- * }} GetAllOptions
+ * }} GetAllParams
  * @typedef {{
+ *  column?: string,
+ *  id: string | number
  *  select?: string,
  *  filters?: Object,
- * }} GetByIdOptions
+ * }} GetByIdParams
  */
 /**
  * @typedef {Object} CRUDBase
- * @property {(options?: GetAllOptions) =>
+ * @property {(params?: GetAllParams) =>
  *   Promise<import('@supabase/supabase-js').PostgrestResponse<any>>
  * } getAll
- * @property {(params: {
- *   column?: string,
- *   id: string | number
- * }, options?: GetByIdOptions) =>
+ * @property {(params: GetByIdParams) =>
  *   Promise<import('@supabase/supabase-js').PostgrestSingleResponse<any>>
  * } getById
  * @property {(payload: Partial<any>) =>
@@ -48,6 +49,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
  * @property {(payload: Partial<any>, id: string | number) =>
  *   Promise<import('@supabase/supabase-js').PostgrestResponse<any>>
  * } updateData
+ * @property {(params: { column: string, value: Array<string | number> }) =>
+ *   Promise<import('@supabase/supabase-js').PostgrestSingleResponse<null>>
+ * } deleteData
+ * @property {(getData: () => void, extraTables: string[]) => void} subscribe
  */
 /**
  * @template TExtend
@@ -70,9 +75,10 @@ export const createCRUD = (
 ) => {
   const base = supabase.from(tableName)
 
+  /** @type {CRUDBase} */
   const crud = {
-    getAll: async (opts = {}) => {
-      const { select = defaultSelect, filters = {}, search = { query: '', columns: [] }, order = { column: 'id', ascending: false }, limit = null, page = null, pageSize = null } = opts
+    getAll: async (params = {}) => {
+      const { select = defaultSelect, filters = {}, search = { query: '', columns: [] }, order = { column: 'id', ascending: false }, limit = null, page = null, pageSize = null } = params
       
       let req = base
         .select(select, page ? { count: 'exact' } : undefined)
@@ -103,7 +109,7 @@ export const createCRUD = (
       }
       return result
     },
-    getById: async ({column = 'id', id}, { select = defaultSelect, filters = {} } = {}) => {
+    getById: async ({column = 'id', id, select = defaultSelect, filters = {} }) => {
       const result = await base
         .select(select)
         .eq(column, id)
@@ -142,7 +148,7 @@ export const createCRUD = (
     deleteData: async ({ column = 'id', value }) => {
       const result = await base
         .delete()
-        .eq(column, value)
+        .in(column, value)
 
       if(result.error){
         console.error(`Error delete ${tableName}:`, result.error.message)
@@ -176,16 +182,43 @@ export const createCRUD = (
   }
   return /** @type {CRUDBase & TExtend} */ (Object.assign(crud, extend(base, crud)))
 }
-
+/**
+ * @typedef {Object} FileOptions
+ * @property {string} [cacheControl]
+ * @property {string} [contentType]
+ * @property {string} [duplex]
+ * @property {boolean} [upsert]
+ */
+/**
+ * @param {string} bucketName
+ */
 export const bucket = (bucketName = SUPABASE_BUCKET) => {
   const storage = supabase.storage.from(bucketName)
 
   return ({
+    /**
+     * @param {string} fileName
+     * @param {any} file
+     * @param {FileOptions} options
+     * @returns 
+     */
     upload: async (fileName, file, options) => {
       const result = await storage.upload(fileName, file, options)
 
       if(result.error){
         console.error(`Error uploading ${fileName}:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+    /**
+     * @param {string[]} fileName
+     */
+    remove: async (fileName = []) => {
+      const result = await storage.remove([...fileName])
+
+      if(result.error){
+        console.error(`Error deleting ${fileName}:`, result.error.message)
         throw result.error
       }
       return result
@@ -215,6 +248,123 @@ export const userService = createCRUD('user')
 export const userHooks = createCRUDHooks(userService, 'user')
 
 export const sessionService = createCRUD('session', {
-  defaultSelect: 'id, user_id, technique_id, technique(id, name, slug), video_url, thumbnail_url, duration_seconds, skill_level, overall_assessment, feedback, suggestions, frames, created_at',
+  defaultSelect: 'id, technique(id, name, variation), video_url, duration_seconds, thumbnail_url, skill_level, overall_assessment, feedback, suggestions, issue(id, reason), strength(id, reason), created_at',
+  extend: (base, crud) => ({
+    getTrainingOverview: async () => {
+      const result = await supabase
+        .from('dashboard_training_overview')
+        .select()
+        .single()
+      if(result.error) {
+        console.error(result.error)
+        throw result.error
+      }
+      return result
+    },
+    getRecentSessions: async (limit = 5) => (
+      crud.getAll({
+        select: 'id, created_at, overall_assessment, technique(id, name)',
+        order: { column: 'created_at', ascending: false },
+        limit,
+      })
+    ),
+    getPerformance: async (period = '30d', technique_name) => {
+      const result = await supabase.rpc('get_session_performance', {
+        period,
+        technique_name,
+      })
+      if(result.error){
+        console.error(`Error getting performance:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+    getIssuesByTechnique: async (period = '30d') => {
+      const result = await supabase.rpc('get_issue_counts', {
+        period
+      })
+      if(result.error){
+        console.error(`Error getting issues by technique:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+    getIssueHeatmap: async (technique) => {
+      const result = await base
+        .select('issue(category), technique(name)')
+        .eq('technique.name', technique)
+      if(result.error) {
+        console.error(result.error)
+        throw result.error
+      }
+      return result
+    },
+    getCommonIssues: async (limit_count = 3) => {
+      const result = await supabase.rpc('get_common_issues', limit_count)
+      if(result.error){
+        console.error(`Error getting on performance:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+    getCommonStrengths: async (limit_count = 3) => {
+      const result = await supabase.rpc('get_common_strengths', limit_count)
+      if(result.error){
+        console.error(`Error getting on performance:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+  })
 })
-export const sessionHooks = createCRUDHooks(sessionService, 'session')
+export const sessionHooks = createCRUDHooks(sessionService, 'session', () => ({
+  getTrainingOverview: (userId) => (
+    useQuery({
+      queryKey: ['dashboard', 'training_overview', { userId }],
+      queryFn: () => sessionService.getTrainingOverview(),
+      enabled: !!userId,
+    })
+  ),
+  getRecentSessions: (userId, { limit }) => (
+    useQuery({
+      queryKey: ['dashboard', 'recent_sessions', { userId, limit }],
+      queryFn: () => sessionService.getRecentSessions(limit),
+      enabled: !!userId,
+    })
+  ),
+  getPerformance: (userId, {period, technique_name}) => (
+    useQuery({
+      queryKey: ['dashboard', 'performance', {userId, period, technique_name}],
+      queryFn: () => sessionService.getPerformance(period, technique_name),
+      enabled: !!userId,
+    })
+  ),
+  getIssuesByTechnique: (userId, {period}) => (
+    useQuery({
+      queryKey: ['dashboard', 'issue_frequency', {userId, period}],
+      queryFn: () => sessionService.getIssuesByTechnique(period),
+      enabled: !!userId,
+    })
+  ),
+  getIssueHeatmap: (userId, {technique}) => (
+    useQuery({
+      queryKey: ['dashboard', 'heatmap', {userId, technique}],
+      queryFn: () => sessionService.getIssueHeatmap(technique),
+      enabled: !!userId,
+    })
+  ),
+  getCommonIssues: (userId, limit_count) => (
+    useQuery({
+      queryKey: ['dashboard', 'common_issues', { userId, limit_count }],
+      queryFn: () => sessionService.getCommonIssues(limit_count),
+      enabled: !!userId,
+    })
+  ),
+  getCommonStrengths: (userId, limit_count) => (
+    useQuery({
+      queryKey: ['dashboard', 'common_strengths', { userId, limit_count }],
+      queryFn: () => sessionService.getCommonStrengths(limit_count),
+      enabled: !!userId,
+    })
+  ),
+}))

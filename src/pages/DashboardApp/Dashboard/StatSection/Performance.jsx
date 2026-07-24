@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Line } from 'react-chartjs-2'
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -61,7 +61,7 @@ function Performance() {
   
   const userId = session?.user?.id
 
-  const { data: { data: performanceData = [] } = {}, isLoading, isError, refetch } = dashboardHooks.getPerformance(userId, { period: view, technique_name: technique })
+  const { data: { data: performanceData = [] } = {}, isLoading, isError, refetch } = sessionHooks.getPerformance(userId, { period: view, technique_name: technique })
   
   if(isLoading) return (
     <Skeleton height={358} borderRadius={12}/>

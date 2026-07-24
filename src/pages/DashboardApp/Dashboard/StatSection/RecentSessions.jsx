@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -21,7 +21,7 @@ function RecentSessions() {
 
   const userId = session?.user?.id
 
-  const { data: { data: sessions = [] } = {}, isLoading, isError, refetch } = dashboardHooks.getRecentSessions(userId, { limit: 5 })
+  const { data: { data: sessions = [] } = {}, isLoading, isError, refetch } = sessionHooks.getRecentSessions(userId, { limit: 5 })
 
   if(isLoading) return (
     <Skeleton height={258} borderRadius={12}/>

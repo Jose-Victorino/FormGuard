@@ -2,9 +2,12 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, usePrefetchQuery } from '@tanstack/react-query'
 
 /**
- * @typedef {ReturnType<typeof useQuery>} QueryHook
- * @typedef {ReturnType<typeof usePrefetchQuery>} PrefetchHook
- * @typedef {ReturnType<typeof useMutation>} MutationHook
+ * @typedef {import('./crudService').CRUDBase} CRUDBase
+ */
+/**
+ * @typedef {ReturnType<typeof useQuery<any>>} useQuery
+ * @typedef {ReturnType<typeof usePrefetchQuery<any>>} PrefetchHook
+ * @typedef {ReturnType<typeof useMutation<any, Error, any>>} MutationHook
  */
 /**
  * @typedef {Object} UpdateDataVariables
@@ -13,9 +16,9 @@ import { useQuery, useMutation, useQueryClient, usePrefetchQuery } from '@tansta
  */
 /**
  * @typedef {Object} HookBase
- * @property {(params?: Object, options?: Object) => QueryHook} getAll
+ * @property {(params?: Object, options?: Object) => useQuery} getAll
  * @property {(params?: Object, options?: Object) => PrefetchHook} prefetchAll
- * @property {(id: Object, options?: Object) => QueryHook} getById
+ * @property {(id: Object, options?: Object) => useQuery} getById
  * @property {(id: Object, options?: Object) => PrefetchHook} prefetchById
  * @property {(isOptimistic?: boolean, options?: Object) => MutationHook} putData
  * @property {(options?: Object) => MutationHook} updateData
@@ -23,11 +26,26 @@ import { useQuery, useMutation, useQueryClient, usePrefetchQuery } from '@tansta
  * @property {(extraTables?: string[]) => void} subscribe
  */
 /**
+ * @template {CRUDBase} TService
  * @template TExtend
- * @param {any} service
+ * @overload
+ * @param {TService} service
  * @param {string} tableName
- * @param {() => TExtend} extend
+ * @returns {HookBase}
+ */
+/**
+ * @template {CRUDBase} TService
+ * @template TExtend
+ * @overload
+ * @param {TService} service
+ * @param {string} tableName
+ * @param {() => TExtend} [extend]
  * @returns {HookBase & TExtend}
+ */
+/**
+ * @param {CRUDBase} service
+ * @param {string} tableName
+ * @param {Function} [extend]
  */
 export const createCRUDHooks = (service, tableName, extend = () => /** @type {TExtend} */ ({})) => {
   const keys = {
@@ -74,7 +92,7 @@ export const createCRUDHooks = (service, tableName, extend = () => /** @type {TE
     putData: (isOptimistic = true, options = {}) => {
       const queryClient = useQueryClient()
       return useMutation({
-        /** @param {any} payload */
+        /** @param {Partial<any>} payload */
         mutationFn: (payload) => service.putData(payload),
         ...(isOptimistic ? {
           onMutate: async (payload) => {
@@ -99,7 +117,12 @@ export const createCRUDHooks = (service, tableName, extend = () => /** @type {TE
     updateData: (options = {}) => {
       const queryClient = useQueryClient()
       return useMutation({
-        /** @param {UpdateDataVariables} data */
+        /**
+         * @param {{
+         *  payload?: Partial<any>,
+         *  id: string | number,
+         * }} data
+         */
         mutationFn: ({ payload, id }) => service.updateData(payload, id),
         onMutate: async ({ payload, id }) => {
           await queryClient.cancelQueries({ queryKey: [tableName] })
@@ -136,8 +159,8 @@ export const createCRUDHooks = (service, tableName, extend = () => /** @type {TE
          * column: string,
          * value: string | Number,
          * }} id
-         * */
-        mutationFn: ({ column, value }) => service.deleteData({ column, value }),
+         */
+        mutationFn: ({ column, value }) => service.deleteData({ column, value: [value] }),
         onMutate: async ({ column = 'id', value }) => {
           await queryClient.cancelQueries({ queryKey: [tableName] })
           const previous = queryClient.getQueriesData({ queryKey: [tableName] })

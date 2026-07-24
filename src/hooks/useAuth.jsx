@@ -2,6 +2,49 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '@/service/crudService'
 
+/**
+ * @typedef {{
+ *    success: boolean,
+ *    data: any,
+ *    error: string,
+ *  } | {
+ *    success: boolean,
+ *    data: import('@supabase/supabase-js').AuthTokenResponsePassword,
+ *    error: null,
+ *  }} SignInResponse
+ * @typedef {{
+ *    success: boolean,
+ *    data: any,
+ *    error: string,
+ *  } | {
+ *    success: boolean,
+ *    data: import('@supabase/supabase-js').AuthResponse,
+ *    error: null,
+ *  }} SignUpResponse
+ */
+/**
+ * @type {React.Context<{
+ *  session: import('@supabase/supabase-js').Session,
+ *  isLoading: boolean,
+ *  signUp: (
+ *    first_name: string,
+ *    last_name: string,
+ *    email: string,
+ *    password: string
+ *  ) => Promise<SignUpResponse>,
+ *  signIn: (
+ *    email: string,
+ *    password: string
+ *  ) => Promise<SignInResponse>,
+ *  signOut: () => Promise<import('@supabase/supabase-js').AuthError>,
+ *  requestPasswordReset: (
+ *    email: string
+ *  ) => ReturnType<typeof supabase.auth.resetPasswordForEmail>,
+ *  updatePassword: (
+ *    password: string
+ *  ) => ReturnType<typeof supabase.auth.updateUser>,
+ * }>}
+ */
 const AuthContext = createContext(null)
 const appURL = window.location.origin
 
@@ -117,10 +160,10 @@ export function AuthContextProvider({children}){
       })
       if(error){
         console.error('Error on sign up: ', error)
-        return { success: false, error }
+        return { success: false, data: null, error: error.message }
       }
 
-      return { success: true, data }
+      return { success: true, data, error: null }
     } catch(error){
       console.error('Error on sign up: ', error)
     }
@@ -134,10 +177,10 @@ export function AuthContextProvider({children}){
       })
       if(error){
         console.error('Error on login: ', error)
-        return { success: false, error: error.message }
+        return { success: false, data: null, error: error.message }
       }
       
-      return { success: true, data }
+      return { success: true, data, error: null }
     } catch(error){
       console.error('Error on login: ', error)
     }
@@ -164,7 +207,6 @@ export function AuthContextProvider({children}){
     </AuthContext.Provider>
   )
 }
-
 export function UserAuth() {
   return useContext(AuthContext)
 }

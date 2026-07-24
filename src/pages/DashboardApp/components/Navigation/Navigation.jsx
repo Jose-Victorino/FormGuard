@@ -35,11 +35,13 @@ function Navigation() {
 
   return (
     <div className={cn(s.sideNav, {[s.collapse]: isCollapsed})}>
-      <Link to='/app' className={s.logoCont}>
-        {isCollapsed
-          ? <img src="/Icon.png" className={s.iconLogo} width="28" height="40" alt="logo"/>
-          : <img src="/Text Logo.png" className={s.textLogo} width="140" height="40" alt="logo"/>
-        }
+      <div className={s.logoCont}>
+        <Link to='/app' className='flex'>
+          {isCollapsed
+            ? <img src="/Icon.png" className={s.iconLogo} width="28" height="40" alt="logo"/>
+            : <img src="/Text Logo.png" className={s.textLogo} width="140" height="40" alt="logo"/>
+          }
+        </Link>
         {!isMobile &&
           <button className={s.collapseBtn} onClick={() => setIsCollapsed(p => !p)} title='Collapse Sidebar'>
             {isCollapsed
@@ -48,7 +50,7 @@ function Navigation() {
             }
           </button>
         }
-      </Link>
+      </div>
       <nav className='flex-col gap-20'>
         <div>
           <span className={s.title}>Menu</span>

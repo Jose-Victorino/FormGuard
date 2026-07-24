@@ -1,4 +1,4 @@
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -29,7 +29,7 @@ function CommonStrength() {
 
   const userId = session?.user?.id
 
-  const { data: { data: strengths = [] } = {}, isLoading, isError, refetch } = dashboardHooks.getCommonStrengths(userId, 3)
+  const { data: { data: strengths = [] } = {}, isLoading, isError, refetch } = sessionHooks.getCommonStrengths(userId, 3)
 
   if(isLoading) return (
     <Skeleton height={150} borderRadius={12}/>

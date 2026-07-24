@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -35,7 +35,7 @@ function IssueFrequency() {
   
   const userId = session?.user?.id
 
-  const { data: { data: issues = [] } = {}, isLoading, isError, refetch } = dashboardHooks.getIssuesByTechnique(userId, { period: view })
+  const { data: { data: issues = [] } = {}, isLoading, isError, refetch } = sessionHooks.getIssuesByTechnique(userId, { period: view })
 
   if(isLoading) return (
     <Skeleton height={358} borderRadius={12}/>

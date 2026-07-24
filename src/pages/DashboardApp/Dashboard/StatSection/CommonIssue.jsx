@@ -1,4 +1,4 @@
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -29,7 +29,7 @@ function CommonIssue() {
 
   const userId = session?.user?.id
 
-  const { data: { data: issues = [] } = {}, isLoading, isError, refetch } = dashboardHooks.getCommonIssues(userId, 3)
+  const { data: { data: issues = [] } = {}, isLoading, isError, refetch } = sessionHooks.getCommonIssues(userId, 3)
 
   if(isLoading) return (
     <Skeleton height={150} borderRadius={12}/>

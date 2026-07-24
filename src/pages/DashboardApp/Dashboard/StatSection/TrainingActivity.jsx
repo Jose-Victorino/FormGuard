@@ -1,4 +1,4 @@
-import { dashboardHooks } from './api.hooks'
+import { sessionHooks } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import Skeleton from 'react-loading-skeleton'
 import cn from 'classnames'
@@ -14,7 +14,7 @@ function TrainingActivity() {
 
   const userId = session?.user?.id
 
-  const { data: { data = {} } = {}, isLoading, isError, refetch} = dashboardHooks.getTrainingOverview(userId)
+  const { data: { data = {} } = {}, isLoading, isError, refetch} = sessionHooks.getTrainingOverview(userId)
 
   if(isLoading) return (
     <article className={s.activity}>
