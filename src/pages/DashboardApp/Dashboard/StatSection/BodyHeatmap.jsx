@@ -153,64 +153,6 @@ function getHeatmapColor(frequency) {
   return "hsl(0, 76%, 50%)"
 }
 
-const sessions = [
-  {
-    issue: [
-      {
-        category: 'poor_wrist_control',
-      },
-      {
-        category: 'weak_smash',
-      },
-    ],
-  },
-  {
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-  {
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-  {
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-  {
-    name: 'clear',
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-  {
-    name: 'clear',
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-  {
-    name: 'clear',
-    issue: [
-      {
-        category: 'poor_footwork',
-      },
-    ],
-  },
-]
-
 function BodyHeatmap() {
   const { session } = UserAuth()
   const [technique, setTechnique] = useState('Serve')
@@ -240,7 +182,7 @@ function BodyHeatmap() {
     }
 
     return { heatmap, bodyPartDetails }
-  }, [sessionsData])
+  }, [rawSessions])
 
   if(isLoading) return (
     <Skeleton height={358} borderRadius={12}/>

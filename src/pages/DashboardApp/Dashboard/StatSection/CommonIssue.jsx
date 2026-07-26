@@ -9,21 +9,6 @@ import Button from '@/components/Button/Button'
 
 import s from './CommonIssue.module.scss'
 
-const data = [
-  {
-    category: "weak_torso_rotation",
-    total: 18
-  },
-  {
-    category: "inaccurate_serve",
-    total: 12
-  },
-  {
-    category: "inconsistent_swing",
-    total: 7
-  }
-]
-
 function CommonIssue() {
   const { session } = UserAuth()
 
@@ -49,7 +34,7 @@ function CommonIssue() {
     <article className={s.issue}>
       <h6>Common Issues</h6>
       <ul>
-        {issues.map(({category, total}) =>
+        {issues.map(({category}) =>
           <li key={category}>{`⚠️ ${capitalizeFirstLetter(category.replaceAll('_', ' '))}`}</li>
         )}
       </ul>

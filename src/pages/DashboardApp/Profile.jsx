@@ -1,14 +1,13 @@
-import { useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { UserAuth } from '@/hooks/useAuth'
 import { userHooks } from '@/service/crudService'
-import { debounce } from '@/library/util'
 import { applyTheme, setStoredTheme } from '@/library/theme'
 
 import { useGlobal } from '@/context/Global'
 
 import s from './Profile.module.scss'
 import cn from 'classnames'
+import useDebounced from '@/hooks/useDebounce'
 
 const DEBOUNCE_MS = 400
 
@@ -22,10 +21,6 @@ function Profile() {
   const { session } = UserAuth()
 
   const userId = session?.user?.id
-  const recordKey = useMemo(
-    () => ['user', 'record', { column: 'id', id: userId }],
-    [userId]
-  )
 
   const { data: { data: userData = {} } = {} } = userHooks.getById(
     { column: 'id', id: userId },
@@ -33,22 +28,13 @@ function Profile() {
   )
   const { mutate: updateUser } = userHooks.updateData()
 
-  const updateUserRef = useRef(updateUser)
-  updateUserRef.current = updateUser
+  const persistRacketSide = useDebounced((id, racket_side) => {
+    updateUser({ id, payload: { racket_side } })
+  }, DEBOUNCE_MS)
 
-  const persistRacketSide = useMemo(
-    () => debounce((id, racket_side) => {
-      updateUserRef.current({ id, payload: { racket_side } })
-    }, DEBOUNCE_MS),
-    []
-  )
-
-  const persistTheme = useMemo(
-    () => debounce((id, theme) => {
-      updateUserRef.current({ id, payload: { theme } })
-    }, DEBOUNCE_MS),
-    []
-  )
+  const persistTheme = useDebounced((id, theme) => {
+    updateUser({ id, payload: { theme } })
+  }, DEBOUNCE_MS)
 
   const racketSide = userData?.racket_side === 'left' ? 'left' : 'right'
   const savedTheme = resolveTheme(userData?.theme)
@@ -56,7 +42,7 @@ function Profile() {
 
   const patchUser = (payload) => {
     if (!userId) return
-    queryClient.setQueryData(recordKey, (old) => {
+    queryClient.setQueryData(['user', 'record', { column: 'id', id: userId }], (old) => {
       const prev = /** @type {{ data?: Record<string, unknown> } | undefined} */ (old)
       if (!prev?.data) return old
       return { ...prev, data: { ...prev.data, ...payload } }

@@ -13,21 +13,6 @@ import s from './IssueFrequency.module.scss'
 const styles = getComputedStyle(document.documentElement)
 const color = styles.getPropertyValue('--color-chart').trim()
 
-const issueData = [
-  {
-    technique: 'Smash',
-    issue_count: 5,
-  },
-  {
-    technique: 'Serve',
-    issue_count: 3,
-  },
-  {
-    technique: 'Clear',
-    issue_count: 1,
-  },
-]
-
 function IssueFrequency() {
   const { session } = UserAuth()
   

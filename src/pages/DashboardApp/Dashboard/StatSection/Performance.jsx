@@ -30,29 +30,6 @@ const VALUE_TO_ASSESSMENT = {
   2: 'Excellent',
 }
 
-const PerformanceData = [
-  {
-    name: 'Serve',
-    overall_assessment: 'Good',
-    created_at: '2026-05-22 19:37:58.789024+00'
-  },
-  {
-    name: 'Serve',
-    overall_assessment: 'Good',
-    created_at: '2026-05-24 19:37:58.789024+00'
-  },
-  {
-    name: 'Serve',
-    overall_assessment: 'Needs Improvement',
-    created_at: '2026-05-27 19:37:58.789024+00'
-  },
-  {
-    name: 'Serve',
-    overall_assessment: 'Excellent',
-    created_at: '2026-05-28 19:37:58.789024+00'
-  },
-]
-
 function Performance() {
   const { session } = UserAuth()
   

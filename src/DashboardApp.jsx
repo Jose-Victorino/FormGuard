@@ -3,16 +3,16 @@ import { Routes, Route, Navigate } from 'react-router'
 import { techniqueHooks } from './service/crudService'
 import { applyTheme, getStoredTheme } from '@/library/theme'
 import { useGlobal } from '@/context/Global'
-
-import SessionLayout from '@/features/PoseDetection/SessionLayout'
-import MainLayout from '@/pages/DashboardApp/MainLayout'
-import Dashboard from '@/pages/DashboardApp/Dashboard/Dashboard'
-import Videos from '@/pages/DashboardApp/Video/Videos'
-import Profile from '@/pages/DashboardApp/Profile'
-import VideoPreview from '@/pages/DashboardApp/Video/VideoPreview'
 import { ProtectedRoute } from './hooks/useAuth'
-import Feedback from './features/PoseDetection/Feedback'
-import SelectionModal from './pages/DashboardApp/Video/SelectionModal'
+
+const SessionLayout = lazy(() => import('@/features/PoseDetection/SessionLayout'))
+const MainLayout = lazy(() => import('@/pages/DashboardApp/MainLayout'))
+const Dashboard = lazy(() => import('@/pages/DashboardApp/Dashboard/Dashboard'))
+const Videos = lazy(() => import('@/pages/DashboardApp/Video/Videos'))
+const Profile = lazy(() => import('@/pages/DashboardApp/Profile'))
+const VideoPreview = lazy(() => import('@/pages/DashboardApp/Video/VideoPreview'))
+const Feedback = lazy(() => import('./features/PoseDetection/Feedback'))
+const SelectionModal = lazy(() => import('./pages/DashboardApp/Video/SelectionModal'))
 
 function MainApp() {
   const { state, set } = useGlobal()

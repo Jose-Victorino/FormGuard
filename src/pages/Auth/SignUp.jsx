@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router'
+import { NavLink } from 'react-router'
 import { useFormik } from 'formik'
 import { UserAuth } from '@/hooks/useAuth'
 import useDocumentTitle from '@/hooks/useDocumentTitle'
@@ -37,7 +37,6 @@ const validationSchema = Yup.object().shape({
 })
 
 function SignUp() {
-  const navigate = useNavigate()
   const [error, setError] = useState('')
   const { signUp } = UserAuth()
 
@@ -64,7 +63,7 @@ function SignUp() {
         if(res.success){
           toast.success('A confirmation email has been sent.')
         }
-        if(res.error) setError(res.error.message)
+        if(res.error) setError(res.error)
       } catch(error){
         console.error(error)
         setError('an error occured')

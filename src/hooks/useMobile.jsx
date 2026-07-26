@@ -1,27 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
-function useIsMobile(breakpoint = 780) {
-  const [isMobile, setIsMobile] = useState(() => {
-    if(typeof window === 'undefined') return false
-
-    return window.innerWidth <= breakpoint
-  })
-
-  useEffect(() => {
+export default function useIsMobile(breakpoint = 780) {
+  return useSyncExternalStore((callback) => {
     const mediaQuery = window.matchMedia(`(max-width: ${breakpoint}px)`)
 
-    const handleChange = (e) => setIsMobile(e.matches)
-
-    setIsMobile(mediaQuery.matches)
-
-    mediaQuery.addEventListener('change', handleChange)
+    mediaQuery.addEventListener('change', callback)
 
     return () => {
-      mediaQuery.removeEventListener('change', handleChange)
+      mediaQuery.removeEventListener('change', callback)
     }
-  }, [breakpoint])
-
-  return isMobile
+  },
+  () => window.matchMedia(`(max-width: ${breakpoint}px)`).matches,
+  () => false
+  )
 }
-
-export default useIsMobile

@@ -9,21 +9,6 @@ import Button from '@/components/Button/Button'
 
 import s from './CommonStrength.module.scss'
 
-const data = [
-  {
-    category: "balanced_stance",
-    total: 18
-  },
-  {
-    category: "good_timing",
-    total: 12
-  },
-  {
-    category: "good_footwork",
-    total: 7
-  }
-]
-
 function CommonStrength() {
   const { session } = UserAuth()
 
@@ -49,7 +34,7 @@ function CommonStrength() {
     <article className={s.strength}>
       <h6>Common Strengths</h6>
       <ul>
-        {strengths.map(({category, total}) =>
+        {strengths.map(({category}) =>
           <li key={category}>{`✅ ${capitalizeFirstLetter(category.replaceAll('_', ' '))}`}</li>
         )}
       </ul>

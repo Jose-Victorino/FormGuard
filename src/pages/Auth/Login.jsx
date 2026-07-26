@@ -8,7 +8,6 @@ import * as Yup from 'yup'
 import GoBackButton from './GoBackButton'
 import Button from '@/components/Button/Button'
 import Input from '@/components/Input'
-import { toast } from '@/components/Toast'
 
 import s from './Login.module.scss'
 
@@ -48,7 +47,7 @@ function Login() {
         const res = await signIn(email, password)
         
         if(res.success) navigate('/app')
-        if(res.error) setError(res.error.message)
+        if(res.error) setError(res.error)
       } catch(error){
         console.error(error)
         setError('an error occured')
