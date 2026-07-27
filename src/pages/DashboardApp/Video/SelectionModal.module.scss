@@ -31,9 +31,9 @@
 }
 
 .img{
-  background-image: u.$gr-light-gray;
   height: 80px;
   width: 80px;
+  fill: var(--color-text)
 }
 
 .variationList{
@@ -41,8 +41,7 @@
   flex-direction: column;
   gap: 5px;
   width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
+  padding: 0 8px 8px;
 
   li{
     display: flex;

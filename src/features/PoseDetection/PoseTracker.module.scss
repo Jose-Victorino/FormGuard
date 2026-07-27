@@ -1,0 +1,24 @@
+@use '@/styles/util' as u;
+
+.note{
+  color: var(--color-text-dimmed);
+}
+
+.phaseText{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 12px;
+  pointer-events: none;
+
+  span{
+    color: white;
+    font-weight: 700;
+    font-size: u.$sz-16-20;
+    background-color: hsla(0, 0%, 0%, 0.5);
+    padding: 0.25em 0.75em;
+    border-radius: 0.25em;
+  }
+}

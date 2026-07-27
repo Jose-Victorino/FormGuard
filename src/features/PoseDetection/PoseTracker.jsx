@@ -1,20 +1,28 @@
 import { useState, useEffect, useRef } from 'react'
-import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
-import { getSessionContext } from './SessionLayout'
+import { NavLink } from 'react-router'
+import { useSessionContext } from './SessionLayout'
 
-import { createPoseReadyGate, isAllVisible } from './util/util'
+import { createPoseLandmarker, createPoseReadyGate, drawCanvas, isAllVisible } from './util/util'
 
 import Button from '@/components/Button/Button'
 
-const FPS = 60
+import s from './PoseTracker.module.scss'
+
 const POSE_HOLD_MS = 800
 const POSE_LOSS_TOLERANCE_MS = 200
 const COUNTDOWN_SECONDS = 3
 
-// from Google's CDN at runtime, same as you would the wasm bundle.
-const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-// Swap "lite" for "full" or "heavy" for more accuracy at the cost of speed.
-const MODEL_URL = '/models/MediaPipe/pose_landmarker_full.task'
+const RECORDER_MIME_CANDIDATES = [
+  'video/webm;codecs=vp9',
+  'video/webm;codecs=vp8',
+  'video/webm',
+  'video/mp4',
+]
+
+const _getSupportedMimeType = () => {
+  if(typeof MediaRecorder === 'undefined') return null
+  return RECORDER_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type)) ?? null
+}
 
 // 'idle'      -> user hasn't clicked "Get Ready" yet
 // 'waiting'   -> waiting for isAllVisible to hold steady (gate is ticking)
@@ -22,7 +30,7 @@ const MODEL_URL = '/models/MediaPipe/pose_landmarker_full.task'
 //                if pose is lost mid-countdown
 // 'recording' -> MediaRecorder is active
 function PoseTracker() {
-  const { setRecording } = getSessionContext()
+  const { setRecording, setIsInputLocked } = useSessionContext()
 
   const containerRef = useRef(null)
   const videoRef = useRef(null)
@@ -31,193 +39,65 @@ function PoseTracker() {
   const chunksRef = useRef([])
   const landmarkLog = useRef([])
   const recordingStartTime = useRef(null)
-  const sizeRef = useRef({ width: 768, height: 432 })
+  const sizeRef = useRef({ width: 768, height: 576 })
 
   const poseLandmarkerRef = useRef(null)
   const rafIdRef = useRef(null)
   const lastVideoTimeRef = useRef(-1)
+  // The raw camera stream (no drawn skeleton) — recorded as-is so the saved
+  // video is clean footage; the canvas is overlay for live display only.
+  const cameraStreamRef = useRef(null)
 
   const [phase, setPhase] = useState('idle')
   const phaseRef = useRef('idle')
   const gateRef = useRef(null)
   const countdownIntervalRef = useRef(null)
+  const countdownLossSinceRef = useRef(null)
  
   const [countdownValue, setCountdownValue] = useState(null)
   const [isBodyVisible, setIsBodyVisible] = useState(false)
+ 
+  // Split "model loaded" from "camera streaming" so the UI doesn't claim
+  // readiness before video is actually playing (issue #1).
   const [isModelReady, setIsModelReady] = useState(false)
+  const [isCameraReady, setIsCameraReady] = useState(false)
+  const [setupError, setSetupError] = useState(null)
+
+  const isReady = isModelReady && isCameraReady
+  const isCancelPhase = phase === 'waiting' || phase === 'countdown'
 
   const setPhaseSynced = (next) => {
     phaseRef.current = next
     setPhase(next)
   }
 
-  useEffect(() => {
-    if(!containerRef.current || !canvasRef.current) return
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      const { width, height } = entry.contentRect
-      if(width === 0 || height === 0) return
-
-      sizeRef.current = { width, height }
-      canvasRef.current.width = width
-      canvasRef.current.height = height
-    })
-
-    observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if(!videoRef.current || !canvasRef.current) return
-
-    /** @type {HTMLCanvasElement} */
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-
-    let cancelled = false
-    let stream = null
-    
-    /** @type {import('@mediapipe/tasks-vision').PoseLandmarkerCallback} */
-    const handleResults = ((result) => {
-      const { width, height } = sizeRef.current
-      const imageLandmarks = result.landmarks?.[0]
-      const worldLandmarks = result.worldLandmarks?.[0]
-      /** @type {HTMLVideoElement} */
-      const video = videoRef.current
-
-      ctx.clearRect(0, 0, width, height)
-      ctx.drawImage(video, 0, 0, width, height)
-
-      if(!imageLandmarks){
-        setIsBodyVisible(false)
-        if(phaseRef.current === 'countdown') cancelCountdown()
-        return
-      }
-
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 2
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-
-      PoseLandmarker.POSE_CONNECTIONS.forEach(({start, end}) => {
-        const fromLandmark = imageLandmarks[start]
-        const toLandmark = imageLandmarks[end]
-        if(!fromLandmark || !toLandmark) return
-        
-        ctx.beginPath()
-        ctx.moveTo(fromLandmark.x * width, fromLandmark.y * height)
-        ctx.lineTo(toLandmark.x * width, toLandmark.y * height)
-        ctx.stroke()
-      })
-      
-      ctx.fillStyle = '#42f14a'
-      imageLandmarks.forEach((landmark) => {
-        const x = landmark.x * width
-        const y = landmark.y * height
-        ctx.beginPath()
-        ctx.arc(x, y, 4, 0, 2 * Math.PI)
-        ctx.fill()
-      })
-      
-      if(phaseRef.current === 'recording' && recordingStartTime.current !== null) {
-        landmarkLog.current.push({
-          t: (performance.now() - recordingStartTime.current) / 1000,
-          imageLandmarks,
-          worldLandmarks,
-        })
-      }
-
-      const isWholeBodyVisible = isAllVisible(imageLandmarks)
-      setIsBodyVisible(isWholeBodyVisible)
- 
-      if(phaseRef.current === 'waiting'){
-        gateRef.current?.tick(imageLandmarks)
-      } else if(phaseRef.current === 'countdown' && !isWholeBodyVisible){
-        cancelCountdown()
-      }
-    })
-
-    const renderLoop = () => {
-      const video = videoRef.current
-      /** @type {import('@mediapipe/tasks-vision').PoseLandmarker} */
-      const poseLandmarker = poseLandmarkerRef.current
-      if(!video || !poseLandmarker) return
-
-      if(video.currentTime !== lastVideoTimeRef.current){
-        lastVideoTimeRef.current = video.currentTime
-        poseLandmarker.detectForVideo(video, performance.now(), handleResults)
-      }
-
-      rafIdRef.current = requestAnimationFrame(renderLoop)
-    }
-
-    const setup = async () => {
-      const vision = await FilesetResolver.forVisionTasks(WASM_URL)
-      
-      const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: MODEL_URL,
-          delegate: 'GPU',
-        },
-        runningMode: 'VIDEO',
-        numPoses: 1,
-        minPoseDetectionConfidence: 0.5,
-        minPosePresenceConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      })
-
-      if(cancelled){
-        poseLandmarker.close()
-        return
-      }
-      poseLandmarkerRef.current = poseLandmarker
-      setIsModelReady(true)
-
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 768, height: 432 },
-        audio: false,
-      })
-
-      if(cancelled){
-        stream.getTracks().forEach((t) => t.stop())
-        return
-      }
-
-      videoRef.current.srcObject = stream
-      await videoRef.current.play()
-      renderLoop()
-    }
-
-    setup()
-
-    return () => {
-      cancelled = true
-      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
-      stream?.getTracks().forEach((t) => t.stop())
-      poseLandmarkerRef.current?.close()
-      poseLandmarkerRef.current = null
-    }
-  }, [])
-
-  // Countdown interval isn't owned by the mount-time effect above (it's
-  // started/stopped from click handlers), so it needs its own unmount cleanup.
-  useEffect(() => {
-    return () => {
-      if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
-    }
-  }, [])
-
   const startRecording = () => {
-    if(typeof MediaRecorder === 'undefined'){
-      console.error('MediaRecorder not supported in this browser')
+    const mimeType = _getSupportedMimeType()
+    if(!mimeType){
+      console.error('No supported MediaRecorder mimeType found in this browser')
+      setSetupError('Recording is not supported in this browser.')
+      setPhaseSynced('idle')
       return
     }
 
-    const canvas = canvasRef.current
-    const stream = canvas.captureStream(FPS)
-    
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' })
+    const stream = cameraStreamRef.current
+    if(!stream){
+      console.error('No camera stream available to record from')
+      setSetupError('Recording could not be started in this browser.')
+      setPhaseSynced('idle')
+      return
+    }
+
+    let recorder
+    try{
+      recorder = new MediaRecorder(stream, { mimeType })
+    } catch(err){
+      console.error('Failed to start MediaRecorder:', err)
+      setSetupError('Recording could not be started in this browser.')
+      setPhaseSynced('idle')
+      return
+    }
+
     chunksRef.current = []
     landmarkLog.current = []
     recordingStartTime.current = performance.now()
@@ -240,18 +120,15 @@ function PoseTracker() {
     setPhaseSynced('idle')
     recorderRef.current?.stop()
   }
-  
-  // Click "Get Ready": start watching for a steady, fully-visible pose.
+
   const beginWaiting = () => {
     gateRef.current = createPoseReadyGate({
       holdMs: POSE_HOLD_MS,
-      lossToleranceMs: POSE_LOSS_TOLERANCE_MS,
       onReady: startCountdown,
     })
     setPhaseSynced('waiting')
   }
 
-  // Gate fired: pose held steady long enough. Begin the visible countdown.
   const startCountdown = () => {
     setPhaseSynced('countdown')
     let remaining = COUNTDOWN_SECONDS
@@ -268,12 +145,11 @@ function PoseTracker() {
         setCountdownValue(remaining)
       }
     }, 1000)
+    countdownLossSinceRef.current = null
   }
 
-  // Pose lost mid-countdown: cancel and drop back to 'waiting' rather than
-  // all the way to 'idle' — the user hasn't given up, they just moved.
   const cancelCountdown = () => {
-    if (countdownIntervalRef.current) {
+    if(countdownIntervalRef.current){
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
@@ -282,14 +158,14 @@ function PoseTracker() {
     setPhaseSynced('waiting')
   }
 
-  // User explicitly backs out of "waiting" or "countdown" via the Cancel button.
   const cancelReady = () => {
-    if (countdownIntervalRef.current) {
+    if(countdownIntervalRef.current){
       clearInterval(countdownIntervalRef.current)
       countdownIntervalRef.current = null
     }
     setCountdownValue(null)
     gateRef.current = null
+    countdownLossSinceRef.current = null
     setPhaseSynced('idle')
   }
 
@@ -307,35 +183,187 @@ function PoseTracker() {
     recording: stopRecording,
   }[phase]
 
+  useEffect(() => {
+    if(!containerRef.current || !canvasRef.current) return
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      const { width, height } = entry.contentRect
+      if(width === 0 || height === 0) return
+
+      sizeRef.current = { width, height }
+      canvasRef.current.width = width
+      canvasRef.current.height = height
+    })
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if(!videoRef.current || !canvasRef.current) return
+
+    let cancelled = false
+    let stream = null
+    
+    /** @type {import('@mediapipe/tasks-vision').PoseLandmarkerCallback} */
+    const handleResults = ((result) => {
+      const imageLandmarks = result.landmarks?.[0]
+      const worldLandmarks = result.worldLandmarks?.[0]
+
+      const isWholeBodyVisible = isAllVisible(imageLandmarks)
+      setIsBodyVisible(isWholeBodyVisible)
+
+      const handlePotentialCountdownLoss = (visible, now) => {
+        if(phaseRef.current !== 'countdown') return
+        if(visible){
+          countdownLossSinceRef.current = null
+          return
+        }
+        if(countdownLossSinceRef.current === null) countdownLossSinceRef.current = now
+        if(now - countdownLossSinceRef.current >= POSE_LOSS_TOLERANCE_MS){
+          countdownLossSinceRef.current = null
+          cancelCountdown()
+        }
+      }
+
+      if(!imageLandmarks){
+        setIsBodyVisible(false)
+        if(phaseRef.current === 'countdown') handlePotentialCountdownLoss(!!imageLandmarks && isWholeBodyVisible, performance.now())
+        return
+      }
+
+      drawCanvas({
+        ctx: canvasRef.current.getContext('2d'),
+        video: videoRef.current,
+        imageLandmarks,
+        width: sizeRef.current.width,
+        height: sizeRef.current.height,
+      })
+      
+      if(phaseRef.current === 'recording' && recordingStartTime.current !== null) {
+        landmarkLog.current.push({
+          t: (performance.now() - recordingStartTime.current) / 1000,
+          imageLandmarks,
+          worldLandmarks,
+        })
+      }
+ 
+      if(phaseRef.current === 'waiting'){
+        gateRef.current?.tick(isWholeBodyVisible)
+      } else if(phaseRef.current === 'countdown' && !isWholeBodyVisible){
+        handlePotentialCountdownLoss(!!imageLandmarks && isWholeBodyVisible, performance.now())
+      }
+    })
+
+    const renderLoop = () => {
+      const video = videoRef.current
+      /** @type {import('@mediapipe/tasks-vision').PoseLandmarker} */
+      const poseLandmarker = poseLandmarkerRef.current
+      if(!video || !poseLandmarker) return
+
+      if(video.currentTime !== lastVideoTimeRef.current){
+        lastVideoTimeRef.current = video.currentTime
+        poseLandmarker.detectForVideo(video, performance.now(), handleResults)
+      }
+
+      rafIdRef.current = requestAnimationFrame(renderLoop)
+    }
+
+    const setup = async () => {
+      try{
+        const poseLandmarker = await createPoseLandmarker('VIDEO')
+
+        if(cancelled){
+          poseLandmarker.close()
+          return
+        }
+        poseLandmarkerRef.current = poseLandmarker
+        setIsModelReady(true)
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 768 }, height: { ideal: 576 }, aspectRatio: { ideal: 4 / 3 } },
+          audio: false,
+        })
+
+        if(cancelled){
+          stream.getTracks().forEach((t) => t.stop())
+          return
+        }
+
+        cameraStreamRef.current = stream
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+
+        if(cancelled) return
+
+        setIsCameraReady(true)
+        renderLoop()
+      } catch(err){
+        if(cancelled) return
+        console.error('PoseTracker setup failed:', err)
+        setSetupError(
+          err?.name === 'NotAllowedError'
+            ? 'Camera access was denied. Please allow camera access and reload.'
+            : 'Could not start the camera or pose model. Please reload and try again.'
+        )
+      }
+    }
+
+    setup()
+
+    return () => {
+      cancelled = true
+      if(rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
+      stream?.getTracks().forEach((t) => t.stop())
+      cameraStreamRef.current = null
+      poseLandmarkerRef.current?.close()
+      poseLandmarkerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
+    }
+  }, [])
+
+  // Lock the Record/Upload Video mode switch while the pose gate is armed
+  // (phase 'waiting') so switching away doesn't leave it ticking in the
+  // background.
+  useEffect(() => {
+    setIsInputLocked?.(phase === 'waiting')
+    return () => setIsInputLocked?.(false)
+  }, [phase, setIsInputLocked])
+
   return (
-    <div>
-      <div>
-        <div ref={containerRef} className='pos-r w-100' style={{ aspectRatio: '16 / 9', maxWidth: '1200px'}}>
+    <>
+      <div className='flex-col a-center gap-5'>
+        <p className={s.note}>Camera must be in front 30°-45° degrees towards your racket side (configured in <NavLink to="/app/profile" className='text-link'>Profile</NavLink>)</p>
+        <div ref={containerRef} className='pos-r' style={{ width: 'min(100%, 1200px, calc(80vh * 4 / 3))', aspectRatio: '4 / 3' }}>
           <video ref={videoRef} className='pos-a w-100' style={{ height: '100%', visibility: 'hidden'}}/>
           <canvas ref={canvasRef} className='pos-a w-100' style={{ height: '100%' }} />
-          {phase === 'countdown' && countdownValue !== null && (
-            <div
-              className='pos-a flex a-center j-center'
-              style={{ inset: 0, fontSize: '96px', fontWeight: 700, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,0.6)', pointerEvents: 'none' }}
-            >
-              {countdownValue}
-            </div>
-          )}
+          <div className={s.phaseText}>
+            {setupError ? <span>{setupError}</span> :
+              <>
+                {!isReady && <span>Loading video capture</span>}
+                {phase === 'waiting' && !isBodyVisible && <span>Get your whole body in frame</span>}
+                {phase === 'waiting' && isBodyVisible && <span>Hold still…</span>}
+                {phase === 'countdown' && countdownValue !== null && <span>Recording starts in {countdownValue}</span>}
+              </>
+            }
+          </div>
         </div>
       </div>
-      <div className='flex gap-10 a-center'>
-        <Button
-          text={buttonText}
-          onClick={buttonAction}
-          disabled={phase === 'idle' && !isModelReady}
-        />
-        {/* <Button text='Start Recording' onClick={() => startRecording()}/> */}
-        {!isModelReady && <span>Loading video capture</span>}
-        {phase === 'waiting' && !isBodyVisible && <span>Get your whole body in frame</span>}
-        {phase === 'waiting' && isBodyVisible && <span>Hold still…</span>}
-        {phase === 'countdown' && <span>Recording starts in {countdownValue}</span>}
-      </div>
-    </div>
+      <Button
+        text={buttonText}
+        color={isCancelPhase ? 'red' : 'blue'}
+        onClick={buttonAction}
+        disabled={!!setupError || (phase === 'idle' && !isReady)}
+        span
+      />
+      {/* <Button text='Start Recording' onClick={() => startRecording()}/> */}
+    </>
   )
 }
 

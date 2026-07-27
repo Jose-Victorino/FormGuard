@@ -54,7 +54,7 @@ function VideoPreview() {
         <div className='flex-col gap-20'>
           <div className={s.card}>
             <div className='flex-col gap-10'>
-              <div className='flex w-100' style={{ aspectRatio: '16 / 9', maxWidth: '100%'}}>
+              <div className='flex' style={{ aspectRatio: '4 / 3', width: 'min(100%, 1200px, calc(80vh * 4 / 3))' }}>
                 <video ref={videoRef} style={{ width: '100%', height: '100%' }} controls />
               </div>
               <div className={s.date}>

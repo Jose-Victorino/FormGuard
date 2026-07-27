@@ -49,6 +49,7 @@ import s from './Button.module.scss'
  */
 const Button = (props) => {
   const {
+    role,
     className,
     style,
     title,
@@ -83,8 +84,24 @@ const Button = (props) => {
     'aria-label': title || text,
   }
 
-  if(props.role === 'link'){
-    const {to, onClick, span: _, ...restLink} = props
+  if(role === 'link'){
+    const {
+      to,
+      onClick,
+      btnType: _btnType,
+      text: _text,
+      size: _size,
+      icon: _icon,
+      iconPos: _iconPos,
+      color: _color,
+      corners: _corners,
+      span: _span,
+      className: _className,
+      style: _style,
+      title: _title,
+      ...restLink
+    } = props
+
     return (
       <Link
         to={to}
@@ -98,7 +115,23 @@ const Button = (props) => {
     )
   }
 
-  const { type = 'button', disabled = false, onClick, span: _, ...restButton } = props
+  const {
+    type = 'button',
+    disabled = false,
+    onClick,
+    btnType: _btnType,
+    text: _text,
+    size: _size,
+    icon: _icon,
+    iconPos: _iconPos,
+    color: _color,
+    corners: _corners,
+    span: _span,
+    className: _className,
+    style: _style,
+    title: _title,
+    ...restButton
+  } = props
 
   return (
     <button

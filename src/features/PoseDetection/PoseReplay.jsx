@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getSessionContext } from './SessionLayout'
+import { useSessionContext } from './SessionLayout'
 import { bucket, sessionHooks } from '@/service/crudService'
 
 import Button from '@/components/Button/Button'
+import { processRecording } from './util/poseProcessing'
 
 function PoseReplay({ userId, techniqueData }) {
   const navigate = useNavigate()
-  const { recording, setRecording } = getSessionContext()
+  const { recording, setRecording } = useSessionContext()
   const [submitError, setSubmitError] = useState(null)
 
   const videoRef = useRef(null)
@@ -48,9 +49,24 @@ function PoseReplay({ userId, techniqueData }) {
     setSubmitError(null)
 
     try{
-      const fileName = `${userId}/${crypto.randomUUID()}.webm`
+      const now = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
+        month: "numeric",
+        day: "numeric",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).replace(/[/:,\s]+/g, "-")
 
-      await bucket().upload(fileName, recording.blob, { contentType: 'video/webm' })
+      // recording.blob is a webm Blob when it came from the live webcam
+      // recorder, but an arbitrary File (mp4/mov/ogg/webm) when it came from
+      // VideoUpload — keep the real content type/extension either way.
+      const contentType = recording.blob.type || 'video/webm'
+      const extension = contentType.split('/')[1]?.split(';')[0] || 'webm'
+      const fileName = `${userId}/${crypto.randomUUID()}_${now}.${extension}`
+
+      await bucket().upload(fileName, recording.blob, { contentType })
       const videoUrl = bucket().getUrl(fileName)
 
       const { data: [inserted] } = await createSession({
@@ -63,26 +79,42 @@ function PoseReplay({ userId, techniqueData }) {
 
       navigate(`/app/feedback/${inserted.id}`)
     } catch(err){
+      console.error('Could not save recording:', err)
       setSubmitError('Could not save this recording. Please try again.')
     }
+
+    const result = await processRecording({
+      progressCallback: (pct, msg) => console.log(pct, msg),
+      videoUrl: recording.videoUrl,
+      landmarks: recording.landmarks,
+      technique: techniqueData.name,
+      variant: techniqueData.variation,
+      racketSide: 'right',
+      debug: true
+    })
+    console.log(result) //? next step, phase & debug response
   }
 
   return (
     <>
-      <div className='flex w-100' style={{ aspectRatio: '16 / 9', maxWidth: '100%'}}>
+      <div className='flex' style={{ aspectRatio: '4 / 3', width: 'min(100%, 1200px, calc(80vh * 4 / 3))' }}>
         <video ref={videoRef} src={recording?.videoUrl} style={{ width: '100%', height: '100%' }} controls />
       </div>
-      <Button
-        btnType='secondary'
-        text='Record again'
-        onClick={() => setRecording(null)}
-        disabled={isSubmitting}
-      />
-      <Button
-        text={isSubmitting ? 'Uploading...' : 'Continue'}
-        onClick={() => confirmRecording()}
-        disabled={isSubmitting}
-      />
+      <div className='flex gap-15'>
+        <Button
+          btnType='secondary'
+          text='Record again'
+          onClick={() => setRecording(null)}
+          span
+          disabled={isSubmitting}
+          />
+        <Button
+          text={isSubmitting ? 'Uploading...' : 'Continue'}
+          onClick={() => confirmRecording()}
+          span
+          disabled={isSubmitting}
+        />
+      </div>
       {submitError && <span>{submitError}</span>}
     </>
   )

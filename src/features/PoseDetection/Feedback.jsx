@@ -137,7 +137,7 @@ function Feedback() {
         <div className={cn('flex-col gap-20', s.left)}>
           <div className={s.card}>
             <h4>Session Complete</h4>
-            <div className='flex w-100' style={{ aspectRatio: '16 / 9', maxWidth: '100%'}}>
+            <div className='flex w-100' style={{ aspectRatio: '4 / 3', maxWidth: '100%'}}>
               <video ref={videoRef} style={{ width: '100%', height: '100%' }} controls />
             </div>
             <div className='flex-col gap-15'>
