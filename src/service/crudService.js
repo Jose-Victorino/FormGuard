@@ -317,54 +317,63 @@ export const sessionService = createCRUD('session', {
     },
   })
 })
-export const sessionHooks = createCRUDHooks(sessionService, 'session', () => ({
-  getTrainingOverview: (userId) => (
+export const sessionHooks = createCRUDHooks(sessionService, 'session', () => {
+  const useGetTrainingOverview = (userId) => (
     useQuery({
       queryKey: ['dashboard', 'training_overview', { userId }],
       queryFn: () => sessionService.getTrainingOverview(),
       enabled: !!userId,
     })
-  ),
-  getRecentSessions: (userId, { limit }) => (
+  )
+  const useGetRecentSessions = (userId, { limit }) => (
     useQuery({
       queryKey: ['dashboard', 'recent_sessions', { userId, limit }],
       queryFn: () => sessionService.getRecentSessions(limit),
       enabled: !!userId,
     })
-  ),
-  getPerformance: (userId, {period, technique_name}) => (
+  )
+  const useGetPerformance = (userId, {period, technique_name}) => (
     useQuery({
       queryKey: ['dashboard', 'performance', {userId, period, technique_name}],
       queryFn: () => sessionService.getPerformance(period, technique_name),
       enabled: !!userId,
     })
-  ),
-  getIssuesByTechnique: (userId, {period}) => (
+  )
+  const useGetIssuesByTechnique = (userId, {period}) => (
     useQuery({
       queryKey: ['dashboard', 'issue_frequency', {userId, period}],
       queryFn: () => sessionService.getIssuesByTechnique(period),
       enabled: !!userId,
     })
-  ),
-  getIssueHeatmap: (userId, {technique}) => (
+  )
+  const useGetIssueHeatmap = (userId, {technique}) => (
     useQuery({
       queryKey: ['dashboard', 'heatmap', {userId, technique}],
       queryFn: () => sessionService.getIssueHeatmap(technique),
       enabled: !!userId,
     })
-  ),
-  getCommonIssues: (userId, limit_count) => (
+  )
+  const useGetCommonIssues = (userId, limit_count) => (
     useQuery({
       queryKey: ['dashboard', 'common_issues', { userId, limit_count }],
       queryFn: () => sessionService.getCommonIssues(limit_count),
       enabled: !!userId,
     })
-  ),
-  getCommonStrengths: (userId, limit_count) => (
+  )
+  const useGetCommonStrengths = (userId, limit_count) => (
     useQuery({
       queryKey: ['dashboard', 'common_strengths', { userId, limit_count }],
       queryFn: () => sessionService.getCommonStrengths(limit_count),
       enabled: !!userId,
     })
-  ),
-}))
+  )
+  return {
+    getTrainingOverview: useGetTrainingOverview,
+    getRecentSessions: useGetRecentSessions,
+    getPerformance: useGetPerformance,
+    getIssuesByTechnique: useGetIssuesByTechnique,
+    getIssueHeatmap: useGetIssueHeatmap,
+    getCommonIssues: useGetCommonIssues,
+    getCommonStrengths: useGetCommonStrengths,
+  }
+})

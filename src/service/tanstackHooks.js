@@ -53,143 +53,150 @@ export const createCRUDHooks = (service, tableName, extend = () => /** @type {TE
     record: (id)     => [tableName, 'record', id],
   }
 
-  const hooks = {
-    getAll: (params = {}, options = {}) => (
-      useQuery({
-        queryKey: keys.lists(params),
-        queryFn: () => service.getAll(params),
-        ...options,
-      })
-    ),
-    prefetchAll: (params = {}, options = {}) => (
-      usePrefetchQuery({
-        queryKey: keys.lists(params),
-        queryFn: () => service.getAll(params),
-        ...options,
-      })
-    ),
-    getById: (id, options = {}) => (
-      useQuery({
+  const useGetAll = (params = {}, options = {}) => (
+    useQuery({
+      queryKey: keys.lists(params),
+      queryFn: () => service.getAll(params),
+      ...options,
+    })
+  )
+  const usePrefetchAll = (params = {}, options = {}) => (
+    usePrefetchQuery({
+      queryKey: keys.lists(params),
+      queryFn: () => service.getAll(params),
+      ...options,
+    })
+  )
+  const useGetById = (id, options = {}) => (
+    useQuery({
+      queryKey: keys.record(id),
+      queryFn: () => service.getById(id),
+      enabled: !!id?.id,
+      ...options,
+    })
+  )
+  const usePrefetchById = (id, options = {}) => {
+    const queryClient = useQueryClient()
+
+    useEffect(() => {
+      if(!id?.id) return
+
+      queryClient.prefetchQuery({
         queryKey: keys.record(id),
         queryFn: () => service.getById(id),
-        enabled: !!id?.id,
         ...options,
       })
-    ),
-    prefetchById: (id, options = {}) => {
-      const queryClient = useQueryClient()
-
-      useEffect(() => {
-        if(!id?.id) return
-
-        queryClient.prefetchQuery({
-          queryKey: keys.record(id),
-          queryFn: () => service.getById(id),
-          ...options,
-        })
-      }, [id, queryClient])
-    },
-    putData: (isOptimistic = true, options = {}) => {
-      const queryClient = useQueryClient()
-      return useMutation({
-        /** @param {Partial<any>} payload */
-        mutationFn: (payload) => service.putData(payload),
-        ...(isOptimistic ? {
-          onMutate: async (payload) => {
-            await queryClient.cancelQueries({ queryKey: [tableName] })
-            const previous = queryClient.getQueriesData({ queryKey: [tableName] })
-  
-            queryClient.setQueriesData({ queryKey: [tableName] }, (old) => {
-              if(!old?.data) return old
-              return { ...old, data: [{ ...payload, id: crypto.randomUUID() }, ...old.data] }
-            })
-  
-            return { previous }
-          },
-          onError: (_err, _, context) => {
-            context.previous.forEach(([key, value]) => queryClient.setQueryData(key, value))
-          }
-        } : {}),
-        onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
-        ...options,
-      })
-    },
-    updateData: (options = {}) => {
-      const queryClient = useQueryClient()
-      return useMutation({
-        /**
-         * @param {{
-         *  payload?: Partial<any>,
-         *  id: string | number,
-         * }} data
-         */
-        mutationFn: ({ payload, id }) => service.updateData(payload, id),
-        onMutate: async ({ payload, id }) => {
+    }, [id, queryClient])
+  }
+  const usePutData = (isOptimistic = true, options = {}) => {
+    const queryClient = useQueryClient()
+    return useMutation({
+      /** @param {Partial<any>} payload */
+      mutationFn: (payload) => service.putData(payload),
+      ...(isOptimistic ? {
+        onMutate: async (payload) => {
           await queryClient.cancelQueries({ queryKey: [tableName] })
           const previous = queryClient.getQueriesData({ queryKey: [tableName] })
-  
+
           queryClient.setQueriesData({ queryKey: [tableName] }, (old) => {
-            if (!old?.data) return old
-            if (Array.isArray(old.data)) {
-              return {
-                ...old,
-                data: old.data.map(item => item.id === id ? { ...item, ...payload } : item),
-              }
-            }
-            if (old.data.id === id) {
-              return { ...old, data: { ...old.data, ...payload } }
-            }
-            return old
+            if(!old?.data) return old
+            return { ...old, data: [{ ...payload, id: crypto.randomUUID() }, ...old.data] }
           })
-  
+
           return { previous }
         },
-        onError: (err, _, context) => {
-          context?.previous?.forEach(([key, value]) => queryClient.setQueryData(key, value))
-        },
-        onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
-        ...options,
-      })
-    },
-    deleteData: (options = {}) => {
-      const queryClient = useQueryClient()
-      return useMutation({
-        /**
-         * @param {{
-         * column: string,
-         * value: string | Number,
-         * }} id
-         */
-        mutationFn: ({ column, value }) => service.deleteData({ column, value: [value] }),
-        onMutate: async ({ column = 'id', value }) => {
-          await queryClient.cancelQueries({ queryKey: [tableName] })
-          const previous = queryClient.getQueriesData({ queryKey: [tableName] })
-  
-          queryClient.setQueriesData({ queryKey: [tableName] }, (old) => {
-            if (!old?.data) return old
-            return { ...old, data: old.data.filter(item => item[column] !== value) }
-          })
-  
-          return { previous }
-        },
-        onError: (err, _, context) => {
+        onError: (_err, _, context) => {
           context.previous.forEach(([key, value]) => queryClient.setQueryData(key, value))
-        },
-        onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
-        ...options,
-      })
-    },
-    subscribe: (extraTables = []) => {
-      const queryClient = useQueryClient()
-      useEffect(() => {
-        const unsubscribe = service.subscribe(() =>
-          queryClient.invalidateQueries({ queryKey: [tableName] }),
-          extraTables
-        )
-        return unsubscribe
-      }, [queryClient, extraTables])
-    },
+        }
+      } : {}),
+      onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
+      ...options,
+    })
+  }
+  const useUpdateData = (options = {}) => {
+    const queryClient = useQueryClient()
+    return useMutation({
+      /**
+       * @param {{
+       *  payload?: Partial<any>,
+       *  id: string | number,
+       * }} data
+       */
+      mutationFn: ({ payload, id }) => service.updateData(payload, id),
+      onMutate: async ({ payload, id }) => {
+        await queryClient.cancelQueries({ queryKey: [tableName] })
+        const previous = queryClient.getQueriesData({ queryKey: [tableName] })
+
+        queryClient.setQueriesData({ queryKey: [tableName] }, (old) => {
+          if (!old?.data) return old
+          if (Array.isArray(old.data)) {
+            return {
+              ...old,
+              data: old.data.map(item => item.id === id ? { ...item, ...payload } : item),
+            }
+          }
+          if (old.data.id === id) {
+            return { ...old, data: { ...old.data, ...payload } }
+          }
+          return old
+        })
+
+        return { previous }
+      },
+      onError: (err, _, context) => {
+        context?.previous?.forEach(([key, value]) => queryClient.setQueryData(key, value))
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
+      ...options,
+    })
+  }
+  const useDeleteData = (options = {}) => {
+    const queryClient = useQueryClient()
+    return useMutation({
+      /**
+       * @param {{
+       * column: string,
+       * value: string | Number,
+       * }} id
+       */
+      mutationFn: ({ column, value }) => service.deleteData({ column, value: [value] }),
+      onMutate: async ({ column = 'id', value }) => {
+        await queryClient.cancelQueries({ queryKey: [tableName] })
+        const previous = queryClient.getQueriesData({ queryKey: [tableName] })
+
+        queryClient.setQueriesData({ queryKey: [tableName] }, (old) => {
+          if (!old?.data) return old
+          return { ...old, data: old.data.filter(item => item[column] !== value) }
+        })
+
+        return { previous }
+      },
+      onError: (err, _, context) => {
+        context.previous.forEach(([key, value]) => queryClient.setQueryData(key, value))
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: [tableName] }),
+      ...options,
+    })
+  }
+  const useSubscribe = (extraTables = []) => {
+    const queryClient = useQueryClient()
+    useEffect(() => {
+      const unsubscribe = service.subscribe(() =>
+        queryClient.invalidateQueries({ queryKey: [tableName] }),
+        extraTables
+      )
+      return unsubscribe
+    }, [queryClient, extraTables])
   }
 
-  return Object.assign(hooks, extend())
+  return Object.assign({
+    getAll: useGetAll,
+    prefetchAll: usePrefetchAll,
+    getById: useGetById,
+    prefetchById: usePrefetchById,
+    putData: usePutData,
+    updateData: useUpdateData,
+    deleteData: useDeleteData,
+    subscribe: useSubscribe,
+  }, extend())
 }
