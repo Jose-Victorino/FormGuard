@@ -1,0 +1,26 @@
+@use '@/styles/util' as u;
+
+.footer{
+  background-color: u.$color-neutral-100;
+}
+
+.main{
+  justify-content: space-around;
+  padding: 60px 0 40px;
+}
+
+.navLink{
+  li{
+    display: flex;
+    justify-content: center;
+  }
+  a:hover{
+    text-decoration: underline;
+  }
+}
+
+@include u.breakpoint(tablet-s){
+  .left{
+    width: 100%;
+  }
+}

@@ -1,0 +1,113 @@
+@use '@/styles/util' as u;
+@use 'sass:color';
+
+.header{
+  width: 100%;
+  box-shadow: 0 0 20px 5px hsla(0, 0%, 0%, 0.05);
+  font-size: u.$sz-14-16;
+  
+  &.isHome{
+    position: fixed;
+    top: 0;
+    z-index: 5;
+
+    &.atTop{
+      box-shadow: unset;
+  
+      .bottom{
+        background-color: transparent;
+        color: white;
+      }
+      svg{
+        stroke: white;
+      }
+    }
+  }
+}
+.header, .mobileNav{
+  svg{
+    stroke: u.$color-neutral-950;
+  }
+}
+
+.logoCont{
+  display: flex;
+
+  img{
+    height: 50px;
+    width: 50px;
+  }
+}
+
+.bottom{
+  position: relative;
+  background-color: white;
+}
+.navLink{
+  height: fit-content;
+
+  li{
+    display: flex;
+    height: fit-content;
+  }
+  a{
+    padding-block: 21px;
+
+    &.active, &:hover{
+      color: u.$color-primary-600;
+    }
+  }
+}
+
+.openMenu{
+  display: none;
+}
+
+.mobileNav{
+  background: u.$color-neutral-100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  display: none;
+  grid-template-rows: max-content 1fr max-content;
+  height: 100vh;
+  height: 100dvh;
+  height: 100svh;
+  max-width: 80vw;
+  width: clamp(200px, 35%, 240px);
+  box-shadow: 0 0 20px 5px hsla(0, 0%, 0%, 0.05);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease-in-out;
+}
+.authCont{
+  display: flex;
+  gap: 10px;
+}
+
+@include u.breakpoint(tablet-s){
+  .bottom .nav{
+    display: none;
+  }
+  .openMenu{
+    display: flex;
+    padding-block: 21px;
+  }
+  .logoCont{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .authCont{
+    display: none;
+  }
+  .mobileNav{
+    display: grid;
+    
+    &.open{
+      transform: translateX(0%);
+    }
+  }
+}

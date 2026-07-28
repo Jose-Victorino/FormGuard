@@ -1,1 +1,142 @@
 @use '@/styles/util' as u;
+
+.hero{
+  background-image: u.$gr-light-gray;
+  height: 100vh;
+  height: 100dvh;
+  height: 100svh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  h3 span{
+    background-image: linear-gradient(
+      135deg,
+      u.$color-primary-700 30%,
+      u.$color-primary-400 100%,
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  // @include u.breakpoint(mobile-s){
+  //   height: unset;
+  //   aspect-ratio: 2 / 3;
+  // }
+}
+
+.how, .technique, .why, .cta{
+  h3{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    &::after{
+      content: '';
+      background-color: u.$color-primary-600;
+      height: 8px;
+      width: 80px;
+    }
+  }
+
+}
+.technique{
+  background-color: u.$color-neutral-100;
+}
+
+.howList{
+  @include u.grid-repeat-column(auto-fit, 250px);
+  gap: 10px;
+
+  svg{
+    fill: u.$color-neutral-800;
+    height: u.$sz-32-48;
+    width: u.$sz-32-48;
+  }
+
+  li{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+}
+
+.techniqueList{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  li{
+    background-color: u.$color-neutral-50;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px 16px 12px;
+    min-width: 220px;
+    border-radius: 12px;
+  }
+
+  [data-technique=Clear]{
+    box-shadow: 0 0 0 2px u.$color-clear;
+  }
+  [data-technique=Serve]{
+    box-shadow: 0 0 0 2px u.$color-serve;
+  }
+  [data-technique=Smash]{
+    box-shadow: 0 0 0 2px u.$color-smash;
+  }
+
+  svg{
+    height: clamp(64px, calc(-48px + 20vw), 96px);
+    width: clamp(64px, calc(-48px + 20vw), 96px);
+  }
+  h4{
+    text-align: center;
+  }
+  br{
+    border-color: u.$color-neutral-300;
+  }
+  p{
+    padding-block: 10px;
+  }
+}
+
+.preview{
+  @include u.grid-repeat-column(auto-fit, 380px);
+  gap: 20px;
+
+  img{
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.parallaxCont{
+  position: relative;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  height: 400px;
+
+  &::before{
+    content: '';
+    background-color: hsla(0, 0%, 0%, 0.3);
+    position: absolute;
+    inset: 0;
+  }
+
+  @include u.breakpoint(mobile-l){
+    background-attachment: unset;
+    height: 260px;
+  }
+}
+
+.cta{
+  & > div{
+    @include u.grid-repeat-column(auto-fit, 380px);
+    gap: 20px;
+  }
+}

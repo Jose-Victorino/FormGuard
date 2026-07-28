@@ -8,10 +8,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.5em;
-  border: 2px dashed hsla(0, 0%, 100%, 0.3);
+  border: 2px dashed u.$color-neutral-300;
   border-radius: 0.5em;
   cursor: pointer;
-  background-color: hsla(0, 0%, 0%, 0.15);
   transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
 
   span{
