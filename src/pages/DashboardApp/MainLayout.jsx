@@ -1,16 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { Outlet } from 'react-router'
 import { UserAuth } from '@/hooks/useAuth'
 import { userHooks } from '@/service/crudService'
-import { applyTheme, setStoredTheme } from '@/library/theme'
+import { applyTheme, getStoredTheme, setStoredTheme } from '@/library/theme'
 import { useGlobal } from '@/context/Global'
 
 import Navigation from '@/pages/DashboardApp/components/Navigation/Navigation'
+import SelectionModal from './Video/SelectionModal'
 
 import s from './MainLayout.module.scss'
 
 function MainLayout() {
-  const { set } = useGlobal()
+  const { state, set } = useGlobal()
   const { session } = UserAuth()
   const userId = session?.user?.id
 
@@ -19,10 +20,16 @@ function MainLayout() {
     { enabled: !!userId }
   )
 
+  useLayoutEffect(() => {
+    const theme = getStoredTheme()
+    applyTheme(theme)
+    set('theme', theme)
+  }, [])
+
   useEffect(() => {
-    if (!isSuccess) return
+    if(!isSuccess) return
     const theme = userData?.theme === 'dark' ? 'dark' : userData?.theme === 'light' ? 'light' : null
-    if (!theme) return
+    if(!theme) return
     applyTheme(theme)
     setStoredTheme(theme)
     set('theme', theme)
@@ -44,6 +51,7 @@ function MainLayout() {
           </svg>
         </button>
       </div>
+      {state.selectionModalToggle && <SelectionModal onClose={() => set('selectionModalToggle', false)}/>}
     </main>
   )
 }

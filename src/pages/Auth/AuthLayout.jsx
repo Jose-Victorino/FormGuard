@@ -8,7 +8,7 @@ function AuthLayout() {
   const { pathname } = useLocation()
   const isPasswordRecovery = pathname === '/auth/recover'
 
-  if(session && !isPasswordRecovery) return <Navigate to='/app' />
+  if(session && !isPasswordRecovery) return <Navigate to='/app' replace/>
 
   return (
     <section className={s.authWrapper}>

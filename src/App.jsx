@@ -1,18 +1,18 @@
-import { lazy } from 'react'
-import { Routes, Route, Navigate } from 'react-router'
-
-const AuthLayout = lazy(() => import('@/pages/Auth/AuthLayout'))
-const LandingApp = lazy(() => import('./LandingApp'))
-const DashboardApp = lazy(() => import('./DashboardApp'))
-const Login = lazy(() => import('@/pages/Auth/Login'))
-const SignUp = lazy(() => import('@/pages/Auth/SignUp'))
-const ForgotPassword = lazy(() => import('@/pages/Auth/ForgotPassword'))
-const Recover = lazy(() => import('@/pages/Auth/Recover'))
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { UserAuth } from './hooks/useAuth'
+import { userHooks } from './service/crudService'
+import { dashboardRoutes } from './routes/dashboard'
+import { landingRoutes } from './routes/landing'
+import { authRoutes } from './routes/auth'
 
 import '@/styles/index.scss'
 import 'react-loading-skeleton/dist/skeleton.css'
-import { UserAuth } from './hooks/useAuth'
-import { userHooks } from './service/crudService'
+
+const router = createBrowserRouter([
+  ...authRoutes,
+  ...landingRoutes,
+  ...dashboardRoutes,
+])
 
 function App() {
   const { session } = UserAuth()
@@ -21,20 +21,7 @@ function App() {
 
   userHooks.prefetchById({ column: 'id', id: userId })
 
-  return (
-    <Routes>
-      <Route path='*' element={<LandingApp />}/>
-      <Route path='/app/*' element={<DashboardApp />}/>
-      <Route path='/auth' element={<AuthLayout />}>
-        <Route index element={<Navigate to='/auth/login' replace />} />
-        <Route path='*' element={<Navigate to='/auth/login' replace />} />
-        <Route path='login' element={<Login />}/>
-        <Route path='sign-up' element={<SignUp />}/>
-        <Route path='forgot-password' element={<ForgotPassword />}/>
-        <Route path='recover' element={<Recover />}/>
-      </Route>
-    </Routes>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App

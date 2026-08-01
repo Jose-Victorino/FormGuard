@@ -1,5 +1,4 @@
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SkeletonTheme } from 'react-loading-skeleton'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -44,7 +43,6 @@ function ThemedSkeletonProvider({ children }) {
 
 const providers = [
   ThemedSkeletonProvider,
-  BrowserRouter,
   AuthContextProvider,
   [QueryClientProvider, { client: queryClient }],
   GlobalProvider,
