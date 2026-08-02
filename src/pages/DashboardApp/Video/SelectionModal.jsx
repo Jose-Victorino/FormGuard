@@ -26,8 +26,8 @@ const Checkbox = ({ checked }) => (
 function SelectionModal({ onClose }) {
   const navigate = useNavigate()
   const [selectedTechnique, setSelectedTechnique] = useState('')
-  
-  const {data: { data: techniqueData = []} = {}, isLoading} = techniqueHooks.getAll({ order: { column: 'slug', ascending: true}})
+
+  const { data: { data: techniqueData = []} = {}, isLoading } = techniqueHooks.getAll({ order: { column: 'slug', ascending: true}})
   const byName = groupBy(techniqueData, 'name')
 
   const proccedToSession = () => {

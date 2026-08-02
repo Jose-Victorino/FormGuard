@@ -55,6 +55,7 @@ function Dashboard() {
   // Treat "no videos yet" as a new user; if the check fails, fall back to the
   // normal dashboard so each StatSection can surface its own error/retry state.
   const isNewUser = !isOverviewLoading && !isOverviewError && (overviewData?.total_videos ?? 0) === 0
+  // const isNewUser = false
 
   useLayoutEffect(() => {
     setChartDefaults()
@@ -66,8 +67,8 @@ function Dashboard() {
   if(isOverviewLoading) return (
     <>
       <div className='flex-wrap j-space-between'>
-        <Skeleton height={32} width={180} borderRadius={12}/>
-        <Skeleton height={48} width={160} borderRadius={6}/>
+        <Skeleton height={32} width={210} borderRadius={6}/>
+        <Skeleton height={40} width={160} borderRadius={6}/>
       </div>
       <div className={s.statActivity}>
         <Skeleton height={137} borderRadius={12}/>

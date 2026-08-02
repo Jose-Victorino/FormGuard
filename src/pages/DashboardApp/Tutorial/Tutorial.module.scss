@@ -1,0 +1,74 @@
+@use '@/styles/util' as u;
+
+.tutorial{
+  display: flex;
+  gap: 20px;
+}
+@mixin panel{
+  background-color: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  flex-basis: 270px;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 0 7px 0px hsla(0, 0%, 0%, 10%);
+}
+
+.sidebar{
+  @include panel;
+
+  ul{
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+  }
+  li{
+    display: flex;
+  }
+  a{
+    padding: 0.375em 1em;
+    width: 100%;
+    border-radius: 3px;
+
+    &:hover{
+      background-color: var(--bg-hover);
+    }
+    &.active{
+      background-color: u.$color-secondary-400;
+      color: white;
+    }
+  }
+  br{
+    border-bottom-color: u.$color-neutral-300;
+  }
+}
+
+.mainContent{
+  @include panel;
+  flex-grow: 1;
+}
+
+.videoCont{
+  display: flex;
+  justify-content: center;
+  height: 320px;
+  width: 100%;
+
+  video{
+    height: auto;
+    width: auto;
+    max-height: 100%;
+    max-width: 100%;
+  }
+}
+
+@container dashboard-content (width < 720px){
+  .tutorial{
+    flex-direction: column;
+  }
+  .sidebar{
+    flex-grow: 1;
+    text-align: center;
+  }
+}
