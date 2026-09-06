@@ -1,36 +1,37 @@
 import { LANDMARKER, MIN_VISIBILITY } from './util'
 
-/** 
+/**
  * @typedef {import('./types').Landmark} Landmark
  * @typedef {import('./types').LandmarkFrame} LandmarkFrame
  * @typedef {'right_elbow' | 'left_elbow' | 'right_knee' | 'left_knee' | 'torso_lean' | 'torso_rotation' | 'right_wrist_angle' | 'left_wrist_angle'} AngleKeys
  * @typedef {'preparation' | 'backswing' | 'contact' | 'follow_through'} PhaseLabels
+ * @typedef {'serve' | 'clear' | 'smash'} Technique
+ * @typedef {'forehand' | 'backhand'} TechniqueVariant
  * @typedef {LandmarkFrame & {
  *  angles: Record<AngleKeys, number>,
  * }} Frames
  * @typedef {Array<Frames & {label: PhaseLabels, value: number | null}>} Phases
  * @typedef {{
- *   powerMetric: {max: number},
- *   informational: {mean: number}
+ *  powerMetric: {max: number},
+ *  informational: {mean: number}
  * }} AngularVelocityStat
  * @typedef {Record<AngleKeys, AngularVelocityStat | null>} AngularVelocity
  * @typedef {{
- *   rangeOfMotion: {min: number, max: number},
- *   informational: {avg: number, std: number}
+ *  rangeOfMotion: {min: number, max: number},
+ *  informational: {avg: number, std: number}
  * } | null} AngleStats
  * @typedef {Record<AngleKeys, AngleStats | null>} AllAngleStats
- * @typedef {{mean: number, max: number} | null} WindowStats
  * @typedef {{
- *    metric: 'wristSpeed' | 'elbowAngularVelocity',
- *    acceleration: {mean: number, max: number},
- *    deceleration: {mean: number, max: number},
- *  }} VelocityProfile
+ *  metric: 'wristSpeed' | 'elbowAngularVelocity',
+ *  acceleration: {mean: number, max: number},
+ *  deceleration: {mean: number, max: number},
+ * }} VelocityProfile
  * @typedef {{
- *   hipPeakTime: number,
- *   shoulderPeakTime: number,
- *   leadTime: number,
- *   hipPeakAngularVelocity: number,
- *   shoulderPeakAngularVelocity: number
+ *  hipPeakTime: number,
+ *  shoulderPeakTime: number,
+ *  leadTime: number,
+ *  hipPeakAngularVelocity: number,
+ *  shoulderPeakAngularVelocity: number
  * } | null} KinematicSequence
  * @typedef {{
  *  totalSamples: number,
@@ -46,39 +47,42 @@ import { LANDMARKER, MIN_VISIBILITY } from './util'
  * }} PoseStats
  */
 /**
- * Per-technique tunable thresholds for phaseDetection.
- *
- * NOT YET VALIDATED (Item #6) — all three techniques currently carry the
- * same generic starting-guess values. The mechanism is real; the
- * divergence isn't, yet. Once real recordings are available per
- * technique, adjust these independently — e.g. a serve's short,
- * low-amplitude, wrist-dominant motion plausibly needs a tighter
- * followThroughRatio (less room for a long decay) and a lower
- * wristCoverageThreshold tolerance (less arm travel to sample from) than
- * a full overhead smash/clear swing. Don't change these without a
- * recording to justify it.
- * @type {Record<string, {wristCoverageThreshold: number, followThroughRatio: number}>}
- */
-const TECHNIQUE_THRESHOLDS = {
-  smash: { wristCoverageThreshold: 0.5, followThroughRatio: 0.25 },
-  clear: { wristCoverageThreshold: 0.5, followThroughRatio: 0.25 },
-  serve: { wristCoverageThreshold: 0.5, followThroughRatio: 0.25 },
-}
-const DEFAULT_THRESHOLDS = { wristCoverageThreshold: 0.5, followThroughRatio: 0.25 }
-
-/**
  * @typedef {{
- *   wristCoverage: number,
- *   contactMetricUsed: 'wristSpeed' | 'elbowAngularVelocity',
- *   wristSpeedSeries: Array<number|undefined>,
- *   elbowAngVelSeries: Array<number|undefined>,
- *   hipRotVelSeries: Array<number|undefined>,
- *   shoulderRotVelSeries: Array<number|undefined>,
- *   hipRotationRange: {min: number, max: number} | null,
- *   shoulderRotationRange: {min: number, max: number} | null,
- *   thresholdsUsed: {wristCoverageThreshold: number, followThroughRatio: number}
+ *  wristCoverage?: number,
+ *  contactMetricUsed?: 'wristSpeed' | 'elbowAngularVelocity',
+ *  wristSpeedSeries?: Array<number|undefined>,
+ *  wristHeightSeries?: Array<number|undefined>
+ *  elbowAngVelSeries?: Array<number|undefined>,
+ *  hipRotVelSeries?: Array<number|undefined>,
+ *  thresholdsUsed?: {wristCoverageThreshold: number, followThroughRatio: number, backswingMethod: 'elbowFlexion' | 'wristHeight' },
+ *  shoulderRotVelSeries?: Array<number|undefined>,
+ *  hipRotationRange?: {min: number, max: number} | null,
+ *  shoulderRotationRange?: {min: number, max: number} | null,
+ *  followThroughCandidateSelfRelative?: {idx: number, time: number, value: number} | null,
+ *  midpointContactCandidate?: {time: number} | null,
+ *  contactPhaseSkipped?: boolean,
+ *  decayPeakReference?: {idx: number, time: number, value: number} | null,
  * }} PhaseDetectionDebug
  */
+/**
+ * @typedef {{
+ *  wristCoverageThreshold: number,
+ *  followThroughRatio: number,
+ *  backswingMethod: 'elbowFlexion' | 'wristHeight',
+ * }} Threshold
+ */
+/** @type {Record<string, Threshold>} */
+const TECHNIQUE_THRESHOLDS = {
+  'clear.forehand': { wristCoverageThreshold: 0.18, followThroughRatio: 0.011, backswingMethod: 'elbowFlexion' }, // yy
+  'clear.backhand': { wristCoverageThreshold: 0.5, followThroughRatio: 0.25, backswingMethod: 'elbowFlexion' },   // everything is off
+  'smash.forehand': { wristCoverageThreshold: 0.5, followThroughRatio: 0.15, backswingMethod: 'elbowFlexion' },   // acceptable
+  'smash.backhand': { wristCoverageThreshold: 0.5, followThroughRatio: 0.25, backswingMethod: 'elbowFlexion' },   // yy
+  'serve.forehand': { wristCoverageThreshold: 0.5, followThroughRatio: 0.28, backswingMethod: 'wristHeight' },    // yy
+  'serve.backhand': { wristCoverageThreshold: 0.5, followThroughRatio: 0.0095, backswingMethod: 'wristHeight' },
+}
+/** @type {Threshold} */
+const DEFAULT_THRESHOLDS = { wristCoverageThreshold: 0.5, followThroughRatio: 0.25, backswingMethod: 'elbowFlexion' }
+const DEFAULT_VARIANT = 'forehand'
 
 const ANGLE_KEYS = /** @type {AngleKeys[]} */ ([
   'right_elbow', 'left_elbow', 'right_knee', 'left_knee',
@@ -171,7 +175,7 @@ function _argExtreme(values, indices, mode){
  * @param {Array<number | undefined>} metricArr
  * @param {number} startIdx
  * @param {number} endIdx
- * @returns {WindowStats}
+ * @returns {{mean: number, max: number} | null}
  */
 function _windowStats(metricArr, startIdx, endIdx){
   const vals = []
@@ -428,7 +432,7 @@ function _seekVideoTo(videoEl, t){
   })
 }
 
-// TODO Make sure the avatar image's ratio is near 16:9
+/** @typedef {{visibilityThreshold?: number, padding?: number, maxDim?: number, quality?: number}} AvatarOptions */
 /**
  * Seek to timestamp `t` in the video, crop around the person using their
  * imageLandmarks bounding extents (with padding), and return a base64 JPEG
@@ -436,7 +440,7 @@ function _seekVideoTo(videoEl, t){
  * @param {string} videoUrl
  * @param {number} t timestamp in seconds
  * @param {Landmark[]} imageLandmarks normalized [0,1] landmarks for this frame
- * @param {{visibilityThreshold?: number, padding?: number, maxDim?: number, quality?: number}} [opts]
+ * @param {AvatarOptions} [opts]
  * @returns {Promise<string | null>}
  */
 export async function extractAvatar(videoUrl, t, imageLandmarks, opts = {}){
@@ -469,20 +473,75 @@ export async function extractAvatar(videoUrl, t, imageLandmarks, opts = {}){
       if(py > y2) y2 = py
     }
  
-    // 12% padding so shoulders and head are clearly visible (matches original)
+    // 12% padding so shoulders and head are clearly visible
     const padX = (x2 - x1) * padding
     const padY = (y2 - y1) * padding
-    x1 = Math.max(0, x1 - padX)
-    y1 = Math.max(0, y1 - padY)
-    x2 = Math.min(vw, x2 + padX)
-    y2 = Math.min(vh, y2 + padY)
+    x1 -= padX
+    y1 -= padY
+    x2 += padX
+    y2 += padY
  
-    if(x2 <= x1 || y2 <= y1) return null
- 
-    const cropW = x2 - x1
-    const cropH = y2 - y1
- 
-    // Resize so the longer edge is at most maxDim px
+    let cropW = x2 - x1
+    let cropH = y2 - y1
+
+    // Force a 4:3 aspect ratio by expanding the shorter dimension.
+    const targetAspect = 4 / 3
+    const currentAspect = cropW / cropH
+
+    const cx = (x1 + x2) / 2
+    const cy = (y1 + y2) / 2
+
+    if(currentAspect > targetAspect){
+      cropH = cropW / targetAspect
+    }else{
+      cropW = cropH * targetAspect
+    }
+
+    x1 = cx - cropW / 2
+    x2 = cx + cropW / 2
+    y1 = cy - cropH / 2
+    y2 = cy + cropH / 2
+
+    // Clamp to the video bounds while preserving the aspect ratio.
+    if(x1 < 0){
+      x2 -= x1
+      x1 = 0
+    }
+    if(x2 > vw){
+      x1 -= x2 - vw
+      x2 = vw
+    }
+    if(y1 < 0){
+      y2 -= y1
+      y1 = 0
+    }
+    if(y2 > vh){
+      y1 -= y2 - vh
+      y2 = vh
+    }
+
+    x1 = Math.max(0, x1)
+    y1 = Math.max(0, y1)
+    x2 = Math.min(vw, x2)
+    y2 = Math.min(vh, y2)
+
+    cropW = x2 - x1
+    cropH = y2 - y1
+
+    // Final safety check in case clamping slightly changed the aspect ratio.
+    const finalAspect = cropW / cropH
+
+    if(finalAspect > targetAspect){
+      cropW = cropH * targetAspect
+      x1 = Math.max(0, Math.min(vw - cropW, (x1 + x2) / 2 - cropW / 2))
+    }else if(finalAspect < targetAspect){
+      cropH = cropW / targetAspect
+      y1 = Math.max(0, Math.min(vh - cropH, (y1 + y2) / 2 - cropH / 2))
+    }
+
+    if(cropW <= 0 || cropH <= 0) return null
+
+    // Resize while preserving the 4:3 aspect ratio.
     const scale = Math.min(maxDim / Math.max(cropW, cropH), 1)
     const outW = Math.round(cropW * scale)
     const outH = Math.round(cropH * scale)
@@ -490,6 +549,7 @@ export async function extractAvatar(videoUrl, t, imageLandmarks, opts = {}){
     const canvas = document.createElement('canvas')
     canvas.width = outW
     canvas.height = outH
+
     const ctx = canvas.getContext('2d')
     ctx.drawImage(videoEl, x1, y1, cropW, cropH, 0, 0, outW, outH)
  
@@ -549,7 +609,8 @@ function landmarkBBoxArea(imageLandmarks, visibilityThreshold){
  * @param {'right' | 'left'} racketSide which arm holds the racket
  * @param {{
  *  visibilityThreshold?: number
- *  technique: any,
+ *  technique: Technique,
+ *  variant: TechniqueVariant,
  *  debug: Boolean,
  * }} opts
  * @returns {{
@@ -562,20 +623,25 @@ function landmarkBBoxArea(imageLandmarks, visibilityThreshold){
 function phaseDetection(frames, racketSide, {
     visibilityThreshold = MIN_VISIBILITY,
     technique,
-    debug,
+    variant,
+    debug = false,
   }){
-
-  if(technique !== undefined && !TECHNIQUE_THRESHOLDS[technique]){
-    console.error(`phaseDetection: unrecognized technique "${technique}" — using default thresholds.`)
+  const thresholdKey = `${technique}.${variant || DEFAULT_VARIANT}`
+  if(technique !== undefined && !TECHNIQUE_THRESHOLDS[thresholdKey]){
+    console.error(`phaseDetection: unrecognized technique/variant "${thresholdKey}" — using default thresholds.`)
   }
-  const { wristCoverageThreshold, followThroughRatio } = TECHNIQUE_THRESHOLDS[technique] ?? DEFAULT_THRESHOLDS
+  const { wristCoverageThreshold, followThroughRatio, backswingMethod } = TECHNIQUE_THRESHOLDS[thresholdKey] ?? DEFAULT_THRESHOLDS
 
-  if(!frames || frames.length < 2) return { phases: [], velocity: { metric: 'wristSpeed', acceleration: null, deceleration: null }, kinematicSequence: null, debugOutput: null }
+  if(!frames || frames.length < 2) return {
+    phases: [],
+    velocity: { metric: 'wristSpeed', acceleration: null, deceleration: null },
+    kinematicSequence: null,
+    debugOutput: null
+  }
 
-  const elbowKey = `${racketSide}_elbow`
   const wristIdx = racketSide === 'right' ? LANDMARKER.right_wrist : LANDMARKER.left_wrist
   const { left_shoulder, right_shoulder, left_hip, right_hip } = LANDMARKER
-
+  
   // Per-frame wrist linear speed (units/sec, in worldLandmarks' metric space)
   const wristSpeed = new Array(frames.length).fill(undefined)
   for(let i = 1; i < frames.length; i++){
@@ -587,8 +653,9 @@ function phaseDetection(frames, racketSide, {
     if((wA.visibility ?? 0) <= visibilityThreshold || (wB.visibility ?? 0) <= visibilityThreshold) continue
     wristSpeed[i] = Math.hypot(wA.x - wB.x, wA.y - wB.y, wA.z - wB.z) / dt
   }
-
+  
   // Per-frame racket-elbow angular velocity (deg/s) — fallback signal
+  const elbowKey = `${racketSide}_elbow`
   const elbowAngVel = new Array(frames.length).fill(undefined)
   for(let i = 1; i < frames.length; i++){
     const dt = frames[i].t - frames[i - 1].t
@@ -617,15 +684,28 @@ function phaseDetection(frames, racketSide, {
   // Backswing/load: most-flexed racket elbow angle before contact
   const elbowAngles = frames.map((f) => f.angles[elbowKey])
   const preContactIdx = allIdx.filter((i) => i <= contactIdx)
-  const backswingIdx = _argExtreme(elbowAngles, preContactIdx, 'min') ?? 0
 
-  // Rigorous kinetic-chain sequencing: track shoulder-line and hip-line
-  // orientation (deg, atan2 in the horizontal x/z plane) as two INDEPENDENT
-  // series, each with its own rotational speed — not just their difference
-  // (that's what torso_rotation already gives you, as a ROM metric via
-  // extractAngles). Good sequencing = hips reach peak rotational speed
-  // before shoulders (proximal-to-distal energy transfer); leadTime > 0
-  // means hips led, leadTime < 0 means shoulders led (a sequencing fault).
+  // Per-frame racket-wrist height (worldLandmarks y; increases downward, same
+  // convention as torso_lean's vertical reference). Alternate backswing
+  // signal for strokes with minimal elbow-flexion excursion.
+  const wristHeight = frames.map((f) => {
+    const w = f.worldLandmarks?.[wristIdx]
+    if(!w || (w.visibility ?? 0) <= visibilityThreshold) return undefined
+    return w.y
+  })
+
+  // Backswing/load detection depends on stroke shape:
+  //  - 'elbowFlexion' (overhead smash/clear, all variants): most-flexed
+  //    racket elbow before contact — the "trophy position" cock is the load
+  //    point for a full overhead stroke.
+  //  - 'wristHeight' (serve): elbow angle barely varies in these compact,
+  //    low-amplitude strokes, so it doesn't reliably mark a load point. Use
+  //    the lowest racket-wrist position before contact instead — the
+  //    racket-head drop/draw-back preceding the forward swing.
+  const backswingIdx = backswingMethod === 'wristHeight'
+    ? _argExtreme(wristHeight, preContactIdx, 'max') ?? 0
+    : _argExtreme(elbowAngles, preContactIdx, 'min') ?? 0
+
   const swingWindow = allIdx.filter((i) => i >= backswingIdx && i <= contactIdx)
   const shoulderTheta = new Array(frames.length).fill(undefined)
   const hipTheta = new Array(frames.length).fill(undefined)
@@ -707,22 +787,23 @@ function phaseDetection(frames, racketSide, {
     if(!seen.has(t)) seen.set(t, { ...frames[idx], label, value })
   }
 
-  //? Debugginig
   /** @type {PhaseDetectionDebug} */
   let debugOutput
   if(debug){
     const hipVals = hipTheta.filter((v) => v !== undefined)
     const shoulderVals = shoulderTheta.filter((v) => v !== undefined)
+
     debugOutput = {
       wristCoverage: _round(wristCoverage, 3),
       contactMetricUsed: useWristForContact ? 'wristSpeed' : 'elbowAngularVelocity',
       wristSpeedSeries: wristSpeed,
+      wristHeightSeries: wristHeight,
       elbowAngVelSeries: elbowAngVel,
       hipRotVelSeries: hipRotVel,
       shoulderRotVelSeries: shoulderRotVel,
       hipRotationRange: hipVals.length ? { min: _round(Math.min(...hipVals)), max: _round(Math.max(...hipVals)) } : null,
       shoulderRotationRange: shoulderVals.length ? { min: _round(Math.min(...shoulderVals)), max: _round(Math.max(...shoulderVals)) } : null,
-      thresholdsUsed: { wristCoverageThreshold, followThroughRatio },
+      thresholdsUsed: { wristCoverageThreshold, followThroughRatio, backswingMethod },
     }
   }
 
@@ -751,8 +832,9 @@ function phaseDetection(frames, racketSide, {
  *  videoUrl: string,
  *  landmarks: LandmarkFrame[],
  *  visibilityThreshold?: number,
- *  avatarOptions?: object,
- *  technique: any,
+ *  avatarOptions?: AvatarOptions,
+ *  technique: Technique,
+ *  variant: TechniqueVariant,
  *  racketSide: 'right' | 'left',
  *  debug?: boolean,
  *  progressCallback?: (pct: number, msg: string) => void
@@ -765,6 +847,7 @@ export async function processRecording({
   visibilityThreshold = MIN_VISIBILITY,
   avatarOptions = {},
   technique,
+  variant,
   racketSide,
   debug = false,
   progressCallback,
@@ -826,7 +909,7 @@ export async function processRecording({
   let kinematicSequence = null
   let debugOutput = null
   if(racketSide === 'right' || racketSide === 'left'){
-    const result = phaseDetection(frames, racketSide, { visibilityThreshold, technique, debug })
+    const result = phaseDetection(frames, racketSide, { visibilityThreshold, technique, variant, debug })
     phases = result.phases
     velocityProfile = result.velocity
     kinematicSequence = result.kinematicSequence
