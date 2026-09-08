@@ -17,6 +17,13 @@
 
 .sidebar{
   @include panel;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+
+  @container dashboard-content (width < 720px){
+    position: static;
+  }
 
   ul{
     display: flex;
@@ -46,13 +53,14 @@
 
 .mainContent{
   @include panel;
+  gap: 25px;
   flex-grow: 1;
 }
 
 .videoCont{
   display: flex;
   justify-content: center;
-  height: 320px;
+  max-height: 320px;
   width: 100%;
 
   video{

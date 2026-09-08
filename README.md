@@ -10,7 +10,7 @@
 <br>
 
 ## ⁉️ About The Project
-Formguard is an AI-powered e-coaching platform that utilizes MediaPipe Pose Estimation for pose detection and locally hosted Ollama Large Language Model (LLM) for the coaching feedback. The system extracts skeletal landmarks from and appying kinematic calculus (peak velocity, peak acceleration, & key joint angles), then passes all of this data to an LLM that compare it against an expert reference that provides a structured coaching response.
+Formguard is an AI-powered e-coaching platform that utilizes MediaPipe Pose Estimation for pose detection and OpenRouter API for the coaching feedback. The system extracts skeletal landmarks from and appying kinematic calculus (peak velocity, peak acceleration, & key joint angles), then passes all of this data to an LLM that compare it against an expert reference that provides a structured coaching response.
 
 <!-- Provide App Screenshots -->
 
@@ -61,10 +61,10 @@ flowchart TD
 
     JSON["Structured JSON"]:::AI_NODES
     PB["Prompt Builder"]:::AI_NODES
-    OLLAMA["Ollama API"]:::AI_NODES
+    OpenRouter["OpenRouter API"]:::AI_NODES
 
     JSON --> PB
-    PB --> OLLAMA
+    PB --> OpenRouter
   end
 
   %% Connections
@@ -89,7 +89,7 @@ This layer is responsible for extracting the pose landmarks from the video frame
 Computes the biomechanical measurements such as joint angles, movement velocity, and acceleration throughout the execution of the selected badminton technique.
 
 ### 3. AI Feedback Layer
-Converts the computations from the kinematics layer along with the pose landmarks into a structured JSON prompt. The LLM (Ollama) will then provide a coaching feedback in natural language.
+Converts the computations from the kinematics layer along with the pose landmarks into a structured JSON prompt. The LLM will then provide a coaching feedback in natural language.
 
 
 <p align="right">[<a href="#readme-top">back to top</a>]</p>
@@ -101,8 +101,9 @@ Converts the computations from the kinematics layer along with the pose landmark
 [![React Router][React_Router-shiled]](https://reactrouter.com)
 [![Supabase][supabase-shiled]](https://supabase.com)
 [![MediaPipe][mediapipe-shiled]](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker)
-[![Ollama][ollama-shiled]](https://ollama.com)
+[![OpenRouter][OpenRouter-shiled]](https://openrouter.ai)
 
+[OpenRouter-shiled]: https://img.shields.io/badge/OpenRouter-000?style=for-the-badge&logo=openrouter&logoColor=94A3B8
 
 <p align="right">[<a href="#readme-top">back to top</a>]</p>
 
@@ -131,7 +132,7 @@ Converts the computations from the kinematics layer along with the pose landmark
 ### Prerequisites
 - Node.js 22+ (recommended)
 - npm or a compatible package manager
-- Ollama
+- OpenRouter
 
 ### 1. Initial Setup
 ```bash
@@ -171,5 +172,4 @@ This project is made for academic purposes.
 [React_Router-shiled]: https://img.shields.io/badge/React_Router-52050b?style=for-the-badge&logo=reactrouter&logoColor=fff
 [eslint-shiled]: https://img.shields.io/badge/ESLint-101828?style=for-the-badge&logo=eslint&logoColor=4b32c3
 [supabase-shiled]: https://img.shields.io/badge/Supabase-11181C?style=for-the-badge&logo=supabase&logoColor=3ECF8E
-[ollama-shiled]: https://img.shields.io/badge/Ollama-ffffff?style=for-the-badge&logo=ollama&logoColor=000000
 [mediapipe-shiled]: https://img.shields.io/badge/MediaPipe-ffffff?style=for-the-badge&logo=mediapipe&logoColor=0097a7

@@ -1,10 +1,9 @@
-import { useEffect } from 'react'
 import { NavLink, useParams, Navigate } from 'react-router'
 import { techniqueHooks } from '@/service/crudService'
 import cn from 'classnames'
 
 import s from './Tutorial.module.scss'
-import { groupBy } from '@/library/util'
+import { groupBy, scrollReset } from '@/library/util'
 import Skeleton from 'react-loading-skeleton'
 
 function Tutorial() {
@@ -45,20 +44,22 @@ function Tutorial() {
     <Navigate to={`/app/tutorial/${techniqueData[0].id}`} replace />
   )
 
-  const byName = groupBy(techniqueData, 'name')
+  const groupedData = groupBy(techniqueData, 'name')
+
+  const title = (selectedTechnique?.name && selectedTechnique?.variation) ? `${selectedTechnique?.name} ${selectedTechnique?.variation}` : null
 
   return (
     <div className={s.tutorial}>
       <div className={s.sidebar}>
         <h5>Techniques</h5>
-        {Object.entries(byName).map(([technique, arr]) =>
+        {Object.entries(groupedData).map(([technique, arr]) =>
           <div key={technique} className={s.techniqueBlock}>
             <h6>{technique}</h6>
             <hr className='mb-5'/>
             <ul>
               {arr.map(({id, variation}) =>
                 <li key={id}>
-                  <NavLink to={`/app/tutorial/${id}`} className={({isActive}) => cn({[s.active]: isActive})}>
+                  <NavLink to={`/app/tutorial/${id}`} className={({isActive}) => cn({[s.active]: isActive})} onClick={() => scrollReset()}>
                     {variation}
                   </NavLink>
                 </li>
@@ -68,11 +69,14 @@ function Tutorial() {
         )}
       </div>
       <div className={s.mainContent}>
+        <h3>{title}</h3>
         <div className={s.videoCont}>
-          <video controls></video>
+          <video src={selectedTechnique?.tutorial_video || ''} controls muted crossOrigin="anonymous"/>
         </div>
-        <div className={s.description}>
-        </div>
+        <div
+          className={cn(s.description, 'flex-col gap-15 text-justify')}
+          dangerouslySetInnerHTML={{__html: selectedTechnique?.tutorial_description}}
+        />
       </div>
     </div>
   )
