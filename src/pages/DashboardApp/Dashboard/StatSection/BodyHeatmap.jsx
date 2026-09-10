@@ -141,6 +141,8 @@ const ISSUE_TO_BODY_PARTS = {
   ],
 }
 
+const ISSUES = ['poor_wrist_control', 'weak_smash', 'poor_footwork', 'poor_footwork', 'poor_footwork', 'poor_footwork', 'poor_footwork']
+
 function getHeatmapColor(frequency) {
   if(frequency === 0) return
 
@@ -162,14 +164,13 @@ function BodyHeatmap() {
 
   const { data: { data: rawSessions } = {}, isLoading, isError, refetch } = sessionHooks.getIssueHeatmap(userId, { technique })
   const sessionsData = rawSessions ?? []
-
+  
   const { heatmap, bodyPartDetails } = useMemo(() => {
     const heatmap = {}
     const bodyPartDetails = {}
 
-    for(const session of sessionsData)
-    for(const issue of session.issue){
-      const bodyParts = ISSUE_TO_BODY_PARTS[issue.category] ?? []
+    for(const issue of ISSUES){
+      const bodyParts = ISSUE_TO_BODY_PARTS[issue] ?? []
 
       for(const bodyPart of bodyParts){
         heatmap[bodyPart] = (heatmap[bodyPart] ?? 0) + 1
@@ -177,7 +178,7 @@ function BodyHeatmap() {
         if(!bodyPartDetails[bodyPart])
           bodyPartDetails[bodyPart] = {}
 
-        bodyPartDetails[bodyPart][issue.category] = (bodyPartDetails[bodyPart][issue.category] ?? 0) + 1
+        bodyPartDetails[bodyPart][issue] = (bodyPartDetails[bodyPart][issue] ?? 0) + 1
       }
     }
 
@@ -209,7 +210,7 @@ function BodyHeatmap() {
       }))
   }
 
-  const totalSessions = sessionsData.length || 1
+  const totalSessions = ISSUES.length || 1
 
   function getFill(bodyPart) {
     const count = heatmap[bodyPart] ?? 0

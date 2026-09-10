@@ -44,7 +44,7 @@ function Videos() {
   )
 
   const techniqueOptions = ['All', ...new Set(optionsData?.map(({slug}) => slug))].reduce((acc, technique) => {
-    acc[technique] = wordCap(technique.replaceAll('_', ' '))
+    acc[technique] = wordCap(technique?.replaceAll('_', ' '))
     return acc
   }, {})
 
@@ -61,12 +61,12 @@ function Videos() {
           const vidTime = formatTime(vid.created_at)
 
           return (
-            <li className={s.videoCard}>
+            <li key={vid.id} className={s.videoCard}>
               <NavLink to={`/app/video/${vid.id}`}>
                 <div className={s.thumbnailCont}>
-                  <img src={vid.thumbnail_url} loading='lazy' alt='video thumbnail' />
+                  <img src={vid.thumbnail_url} loading='lazy' alt='video thumbnail' crossOrigin="anonymous" />
                   <div>
-                    <span className={`badge-${vid.overall_assessment.replaceAll(' ', '_').toLocaleLowerCase()}`}>{vid.overall_assessment}</span>
+                    <span className={`badge-${vid.overall_assessment?.replaceAll(' ', '_').toLocaleLowerCase()}`}>{vid.overall_assessment}</span>
                   </div>
                 </div>
                 <div className={s.content}>

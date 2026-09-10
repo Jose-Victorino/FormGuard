@@ -33,7 +33,7 @@ const VALUE_TO_ASSESSMENT = {
 function Performance() {
   const { session } = UserAuth()
   
-  const [technique, setTechnique] = useState('serve')
+  const [technique, setTechnique] = useState('Serve')
   const [view, setView] = useState('30d')
   
   const userId = session?.user?.id
@@ -53,7 +53,7 @@ function Performance() {
       />
     </article>
   )
-
+  
   const techniques = [...new Set(performanceData.map(item => item.name))]
 
   const labels = [
@@ -93,9 +93,9 @@ function Performance() {
         <h6>Performance Trend</h6>
         <div className='flex-wrap gap-10'>
           <Input type='select' name='technique' value={technique} onChange={(e) => setTechnique(e.target.value)} options={{
-            serve: 'Serve',
-            smash: 'Smash',
-            clear: 'Clear',
+            Serve: 'Serve',
+            Smash: 'Smash',
+            Clear: 'Clear',
           }}/>
           <Input type='select' name='technique' value={view} onChange={(e) => setView(e.target.value)} options={{
             '30d': 'Last 30 days',

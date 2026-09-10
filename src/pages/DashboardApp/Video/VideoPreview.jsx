@@ -5,7 +5,7 @@ import s from './VideoPreview.module.scss'
 
 const LLM_RESPONSE = {
   skill_level: "Intermediate",
-  overall_assesment: "Needs Improvement",
+  overall_assessment: "Needs Improvement",
   feedback: "LLM feedback lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque. lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque.lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem.",
   strengths: [
     {
@@ -45,7 +45,7 @@ const LLM_RESPONSE = {
 function VideoPreview() {
   const videoRef = useRef(null)
 
-  const overallAssesment = LLM_RESPONSE.overall_assesment.replaceAll(' ', '_').toLocaleLowerCase()
+  const overallassessment = LLM_RESPONSE.overall_assessment.replaceAll(' ', '_').toLocaleLowerCase()
 
   return (
     <>
@@ -64,8 +64,8 @@ function VideoPreview() {
             </div>
             <div className='flex-col gap-15'>
               <div className='flex j-space-between'>
-                <span>Overall Assesment</span>
-                <span className={s[`badge-${overallAssesment}`]}>{LLM_RESPONSE.overall_assesment}</span>
+                <span>Overall assessment</span>
+                <span className={s[`badge-${overallassessment}`]}>{LLM_RESPONSE.overall_assessment}</span>
               </div>
               <div className='flex j-space-between'>
                 <span>Skill Level</span>

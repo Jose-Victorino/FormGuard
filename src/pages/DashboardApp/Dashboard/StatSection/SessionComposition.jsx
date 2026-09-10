@@ -1,7 +1,12 @@
-import React from 'react'
+import { sessionHooks } from '@/service/crudService'
+import { UserAuth } from '@/hooks/useAuth'
+import Skeleton from 'react-loading-skeleton'
+import cn from 'classnames'
+import { Bar } from 'react-chartjs-2'
+
+import Button from '@/components/Button/Button'
 
 import s from './SessionComposition.module.scss'
-import { Bar } from 'react-chartjs-2'
 
 const styles = getComputedStyle(document.documentElement)
 
@@ -10,6 +15,7 @@ const COLORS = {
   good:               styles.getPropertyValue('--color-clear').trim(),
   needs_improvement:  styles.getPropertyValue('--color-smash').trim(),
 }
+
 /**
  * @param {any} data 
  * @returns {import('chart.js').ChartOptions<"bar">}
@@ -44,46 +50,56 @@ const getOptions = (data) => ({
   }
 })
 
-const getTotal = (data) => {
-  return Object.values(data).reduce(
-    (sum, value) => sum + value,
-    0
-  )
-}
-
 function SessionComposition() {
-  const rawData = {
-    excellent: 9,
-    good: 7,
-    needs_improvement: 5,
-  }
+  const { session } = UserAuth()
 
+  const userId = session?.user?.id
+
+  const { data: { data = [] } = {}, isLoading, isError, refetch } = sessionHooks.getSessionComposition(userId)
+
+  if(isLoading) return (
+    <Skeleton height={190} borderRadius={12}/>
+  )
+
+  if(isError) return (
+    <article className={cn(s.sessionComposition, s.errorCell)}>
+      <span>Error fetching data</span>
+      <Button
+        text='Retry'
+        onClick={() => refetch()}
+      />
+    </article>
+  )
+
+  const sessionData = data[0]
+  const { excellent, good, needs_improvement, total } = sessionData
+  
   return (
     <article className={s.sessionComposition}>
       <h6>Session Composition</h6>
       <div>
-        <p>Overall Assesment</p>
+        <p>Overall assessment</p>
         <div className={s.chartCont}>
           <Bar
-            options={getOptions(rawData)}
+            options={getOptions(sessionData)}
             data={{
               labels: [''],
               datasets: [
                 {
                   label: 'Excellent',
-                  data: [(rawData.excellent / getTotal(rawData)) * 100],
+                  data: [total > 0 ? (excellent / total) * 100 : 0],
                   barThickness: 12,
                   backgroundColor: COLORS.excellent,
                 },
                 {
                   label: 'Good',
-                  data: [(rawData.good / getTotal(rawData)) * 100],
+                  data: [total > 0 ? (good / total) * 100 : 0],
                   barThickness: 12,
                   backgroundColor: COLORS.good,
                 },
                 {
                   label: 'Needs Improvement',
-                  data: [(rawData.needs_improvement / getTotal(rawData)) * 100],
+                  data: [total > 0 ? (needs_improvement / total) * 100 : 0],
                   barThickness: 12,
                   backgroundColor: COLORS.needs_improvement,
                 },

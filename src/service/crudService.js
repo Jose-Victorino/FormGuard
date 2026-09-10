@@ -247,8 +247,14 @@ export const techniqueHooks = createCRUDHooks(techniqueService, 'technique')
 export const userService = createCRUD('user')
 export const userHooks = createCRUDHooks(userService, 'user')
 
+// Write-only from the client's perspective (rows are inserted by `Feedback`
+// once `analyze()` resolves) — no hooks wrapper since nothing queries these
+// directly yet; the session's own `defaultSelect` joins them in for reads.
+export const issueService = createCRUD('issue')
+export const strengthService = createCRUD('strength')
+
 export const sessionService = createCRUD('session', {
-  defaultSelect: 'id, technique(id, name, variation), video_url, duration_seconds, thumbnail_url, skill_level, overall_assessment, feedback, suggestions, issue(id, reason), strength(id, reason), created_at',
+  defaultSelect: 'id, technique(id, name, variation), video_url, thumbnail_url, duration_seconds, skill_level, overall_assessment, feedback, suggestions, issue(id, reason), strength(id, reason), frames, created_at',
   extend: (base, crud) => ({
     getTrainingOverview: async () => {
       const result = await supabase
@@ -293,11 +299,16 @@ export const sessionService = createCRUD('session', {
       const result = await base
         .select('issue(category), technique(name)')
         .eq('technique.name', technique)
-      if(result.error) {
+
+      if(result.error){
         console.error(result.error)
         throw result.error
       }
-      return result
+
+      return {
+        ...result,
+        data: result.data.flatMap(s => s.issue.map(i => i.category))
+      }
     },
     getCommonIssues: async (limit_count = 3) => {
       const result = await supabase.rpc('get_common_issues', limit_count)
@@ -311,6 +322,14 @@ export const sessionService = createCRUD('session', {
       const result = await supabase.rpc('get_common_strengths', limit_count)
       if(result.error){
         console.error(`Error getting on performance:`, result.error.message)
+        throw result.error
+      }
+      return result
+    },
+    getSessionComposition: async () => {
+      const result = await supabase.rpc('get_session_composition')
+      if(result.error){
+        console.error(`Error getting session composition:`, result.error.message)
         throw result.error
       }
       return result
@@ -367,6 +386,13 @@ export const sessionHooks = createCRUDHooks(sessionService, 'session', () => {
       enabled: !!userId,
     })
   )
+  const useGetSessionComposition = (userId) => (
+    useQuery({
+      queryKey: ['dashboard', 'session_composition', { userId }],
+      queryFn: () => sessionService.getSessionComposition(),
+      enabled: !!userId,
+    })
+  )
   return {
     getTrainingOverview: useGetTrainingOverview,
     getRecentSessions: useGetRecentSessions,
@@ -375,5 +401,6 @@ export const sessionHooks = createCRUDHooks(sessionService, 'session', () => {
     getIssueHeatmap: useGetIssueHeatmap,
     getCommonIssues: useGetCommonIssues,
     getCommonStrengths: useGetCommonStrengths,
+    getSessionComposition: useGetSessionComposition,
   }
 })
