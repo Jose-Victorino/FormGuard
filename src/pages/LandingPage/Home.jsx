@@ -4,6 +4,7 @@ import s from './Home.module.scss'
 
 import expertSnapshot from '@/assets/images/landing_expert_snapshot.png'
 import userSnapshot from '@/assets/images/landing_user_snapshot.png'
+import cta from '@/assets/images/cta.jpg'
 
 /**
  * @typedef {import('@/features/PoseDetection/util/poseProcessing').PoseStats} PoseStats
@@ -101,22 +102,8 @@ function Home() {
       </section>
       <section
         className={s.parallaxCont}
-        style={{ backgroundImage: `` }}
+        style={{ backgroundImage: `url(${cta})` }}
       />
-      <section className={s.cta}>
-        <div className='container pad-block-80'>
-          <img src="" alt="cta image" />
-          <div className='flex-col gap-15'>
-            <h4>Enhance your badminton learning experience</h4>
-            <Button
-              role='link'
-              text='Get Started'
-              corners='rounded'
-              to='/auth/login'
-            />
-          </div>
-        </div>
-      </section>
     </>
   )
 }

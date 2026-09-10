@@ -8,7 +8,7 @@ function GoBackButton() {
   const navigate = useNavigate()
 
   return (
-    <button type='button' className={s.goBackbtn} onClick={() => navigate(-1)}>
+    <button type='button' className={s.goBackbtn} onClick={() => navigate('/')}>
       <div>
         {arrowLeft}
       </div>

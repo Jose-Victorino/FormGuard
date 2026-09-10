@@ -112,7 +112,7 @@
   img{
     border-radius: 6px;
     object-fit: cover;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 5 / 3;
   }
 }
 
@@ -133,12 +133,5 @@
   @include u.breakpoint(mobile-l){
     background-attachment: unset;
     height: 260px;
-  }
-}
-
-.cta{
-  & > div{
-    @include u.grid-repeat-column(auto-fit, 380px);
-    gap: 20px;
   }
 }
