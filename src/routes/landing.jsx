@@ -18,5 +18,3 @@ export const landingRoutes = [
     ],
   },
 ]
-/** @type {import('react-router').DOMRouterOpts} */
-export const testingOpts = {}

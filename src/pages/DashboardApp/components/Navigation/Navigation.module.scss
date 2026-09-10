@@ -2,7 +2,6 @@
 
 .sideNav{
   background-color: var(--sidenav-bg);
-  // background-color: u.$color-primary-700;
   position: sticky;
   top: 0;
   left: 0;
@@ -22,7 +21,7 @@
     overflow: hidden;
   }
   &.collapse{
-    width: 3.5em;
+    width: 3.25em;
 
     .title{
       opacity: 0;
@@ -79,9 +78,9 @@
   .navItem{
     display: flex;
     align-items: center;
-    gap: 0.5em;
+    gap: 0.75em;
     width: 100%;
-    padding: 0.75em 1em;
+    padding: 0.5em 1em;
 
     &.active{
       font-weight: bold;

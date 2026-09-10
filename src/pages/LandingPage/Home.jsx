@@ -2,6 +2,9 @@ import Button from '@/components/Button/Button'
 
 import s from './Home.module.scss'
 
+import expertSnapshot from '@/assets/images/landing_expert_snapshot.png'
+import userSnapshot from '@/assets/images/landing_user_snapshot.png'
+
 /**
  * @typedef {import('@/features/PoseDetection/util/poseProcessing').PoseStats} PoseStats
  */
@@ -58,8 +61,6 @@ function Home() {
               <p>Backhand</p>
               <hr />
               <p>Forehand</p>
-              <hr />
-              <p>Underarm</p>
             </li>
             <li data-technique='Serve'>
               <div className='flex-col a-center gap-10'>
@@ -78,8 +79,6 @@ function Home() {
               <p>Backhand</p>
               <hr />
               <p>Forehand</p>
-              <hr />
-              <p>Jumping</p>
             </li>
           </ul>
         </div>
@@ -91,11 +90,11 @@ function Home() {
           <div className={s.preview}>
             <div className='flex-col gap-15'>
               <h5>User</h5>
-              <img src="" alt="user preview" />
+              <img src={userSnapshot} alt="user preview" />
             </div>
             <div className='flex-col gap-15'>
               <h5>Expert</h5>
-              <img src="" alt="expert preview" />
+              <img src={expertSnapshot} alt="expert preview" />
             </div>
           </div>
         </div>

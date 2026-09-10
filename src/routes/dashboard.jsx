@@ -39,10 +39,8 @@ export const dashboardRoutes = [
           {path: 'profile', Component: Profile},
         ],
       },
-      {path: '/session/:technique_slug', Component: SessionLayout},
-      {path: '/feedback/:session_id', Component: Feedback},
+      {path: '/app/session/:technique_slug', Component: SessionLayout},
+      {path: '/app/feedback/:session_id', Component: Feedback},
     ],
   },
 ]
-/** @type {import('react-router').DOMRouterOpts} */
-export const testingOpts = {}

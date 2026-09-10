@@ -55,7 +55,7 @@ function MobileNavigation({closeMenu, menuValue}){
 function Navigation() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { session } = UserAuth()
+  const { session, isLoading } = UserAuth()
 
   const userId = session?.user?.id
 
@@ -117,21 +117,22 @@ function Navigation() {
               </ul>
             </nav>
             <div className={s.authCont}>
-              {userId ?
-                <Button
-                  text='Go to dashboard'
-                  onClick={() => navigate('/app')}
-                /> :
-                <>
+              {isLoading ? <div /> :
+                userId ?
                   <Button
-                    text='Login'
-                    onClick={() => navigate('/auth/login')}
-                  />
-                  <Button
-                    text='Sign up'
-                    onClick={() => navigate('/auth/sign-up')}
-                  />
-                </>
+                    text='Go to dashboard'
+                    onClick={() => navigate('/app')}
+                  /> :
+                  <>
+                    <Button
+                      text='Login'
+                      onClick={() => navigate('/auth/login')}
+                    />
+                    <Button
+                      text='Sign up'
+                      onClick={() => navigate('/auth/sign-up')}
+                    />
+                  </>
               }
             </div>
           </div>

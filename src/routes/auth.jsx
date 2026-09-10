@@ -21,5 +21,3 @@ export const authRoutes = [
     ],
   },
 ]
-/** @type {import('react-router').DOMRouterOpts} */
-export const testingOpts = {}
