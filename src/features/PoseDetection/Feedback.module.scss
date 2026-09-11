@@ -67,6 +67,23 @@
   @include u.skillBadge();
 }
 
+.loadingWrap{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+}
+.loadingText{
+  color: u.$color-primary-500;
+  font-weight: 500;
+  animation: pulseText 1.6s ease-in-out infinite;
+}
+@keyframes pulseText{
+  0%, 100%{ opacity: 0.5; }
+  50%{ opacity: 1; }
+}
+
 
 @container main-content (width < 1200px){
   .feedback{

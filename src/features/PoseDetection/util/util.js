@@ -1,5 +1,32 @@
 /** @typedef {import('./types').Landmark} Landmark */
 
+import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
+
+export const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+// 'lite' | 'full' | 'heavy'
+export const MODEL_URL = '/models/MediaPipe/pose_landmarker_heavy.task'
+
+/**
+ * Spin up a PoseLandmarker instance with the settings shared by every
+ * consumer (live webcam tracking, offline video-file processing).
+ * @param {'VIDEO' | 'IMAGE'} runningMode
+ * @returns {Promise<PoseLandmarker>}
+ */
+export async function createPoseLandmarker(runningMode = 'VIDEO'){
+  const vision = await FilesetResolver.forVisionTasks(WASM_URL)
+  return PoseLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: MODEL_URL,
+      delegate: 'GPU',
+    },
+    runningMode,
+    numPoses: 1,
+    minPoseDetectionConfidence: 0.5,
+    minPosePresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  })
+}
+
 export const LANDMARKER = {
   nose: 0,
   left_eye_inner: 1, left_eye: 2, left_eye_outer: 3,
@@ -34,15 +61,39 @@ export const CORE_LANDMARK_INDICES = [
 
 export const MIN_VISIBILITY = 0.6
 
+export function drawCanvas({ctx, video, imageLandmarks, width, height}){
+  ctx.clearRect(0, 0, width, height)
+  ctx.drawImage(video, 0, 0, width, height)
+
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  PoseLandmarker.POSE_CONNECTIONS.forEach(({start, end}) => {
+    const fromLandmark = imageLandmarks[start]
+    const toLandmark = imageLandmarks[end]
+    if(!fromLandmark || !toLandmark) return
+    
+    ctx.beginPath()
+    ctx.moveTo(fromLandmark.x * width, fromLandmark.y * height)
+    ctx.lineTo(toLandmark.x * width, toLandmark.y * height)
+    ctx.stroke()
+  })
+  
+  ctx.fillStyle = '#42f14a'
+  imageLandmarks.forEach((landmark) => {
+    const x = landmark.x * width
+    const y = landmark.y * height
+    ctx.beginPath()
+    ctx.arc(x, y, 4, 0, 2 * Math.PI)
+    ctx.fill()
+  })
+}
+
 /**
  * Whether the core body landmarks the pipeline depends on are both
  * confidently tracked and within frame bounds, for a SINGLE frame.
- *
- * Intended use: polled continuously, once per pose-estimation frame,
- * after the user taps "get ready" — NOT a one-off pre-click gate. Because
- * it's called every frame, treat it as a raw per-frame signal only; don't
- * trigger the countdown directly off a single `true` result (see
- * `createPoseReadyGate`, which debounces this into a stable trigger).
  *
  * A landmark's x/y is only meaningful evidence of true position when
  * MediaPipe is confident about it, so each core landmark must pass BOTH:
@@ -56,8 +107,8 @@ export const MIN_VISIBILITY = 0.6
  * @param {Landmark[]} landmarks
  * @returns {Boolean}
  */
-export const isAllVisible = (landmarks) => {
-  if(!landmarks || landmarks?.length === 0) return false
+export function isAllVisible(landmarks) {
+  if(!landmarks || landmarks.length === 0) return false
 
   return CORE_LANDMARK_INDICES.every((i) => {
     const lm = landmarks[i]
@@ -66,71 +117,4 @@ export const isAllVisible = (landmarks) => {
     if((visibility ?? 0) <= MIN_VISIBILITY) return false
     return x >= 0 && x <= 1 && y >= 0 && y <= 1
   })
-}
-
-/**
- * Stateful gate that turns per-frame `isAllVisible` checks into a
- * debounced "pose confirmed, start the countdown" trigger.
- *
- * Flow: user taps "get ready" -> call `tick(landmarks)` on every
- * pose-estimation frame -> `onReady()` fires once `isAllVisible` has held
- * true continuously for `holdMs`, at which point the caller should show
- * the countdown UI and start it.
- *
- * A single bad frame (self-occlusion mid-adjustment, brief tracking
- * jitter) shouldn't reset progress toward triggering — `lossToleranceMs`
- * absorbs short dropouts. But it still resets reliably if the person
- * actually steps out of frame or out of pose for longer than that.
- *
- * This gate is single-shot (fires once, then goes quiet) — it answers
- * "when should the countdown START", not "is the pose still held during
- * the countdown". If you want the countdown to cancel/reset when pose is
- * lost mid-countdown, that's a separate, lighter watch loop during the
- * countdown itself (simpler: no need to re-debounce the "lost" case with
- * the same hold time, since cancelling early is the safer failure mode
- * there) — call `reset()` on this gate to rearm it if you want the same
- * instance to detect "ready" again afterward.
- *
- * @param {{holdMs?: number, lossToleranceMs?: number, onReady?: () => void, onLost?: () => void}} opts
- */
-export function createPoseReadyGate({ holdMs = 800, lossToleranceMs = 200, onReady, onLost } = {}) {
-  let visibleSinceMs = null
-  let lostSinceMs = null
-  let fired = false
- 
-  return {
-    /**
-     * Call once per pose-estimation frame with the current landmarks.
-     * @param {Landmark[]} landmarks
-     * @param {number} [now] - override for testing; defaults to performance.now()
-     */
-    tick(landmarks, now = performance.now()) {
-      if (fired) return
- 
-      const ok = isAllVisible(landmarks)
- 
-      if (ok) {
-        lostSinceMs = null
-        if (visibleSinceMs === null) visibleSinceMs = now
-        if (now - visibleSinceMs >= holdMs) {
-          fired = true
-          onReady?.()
-        }
-      } else if (visibleSinceMs !== null) {
-        if (lostSinceMs === null) lostSinceMs = now
-        if (now - lostSinceMs >= lossToleranceMs) {
-          visibleSinceMs = null
-          lostSinceMs = null
-          onLost?.()
-        }
-      }
-    },
- 
-    /** Rearm the gate so it can fire onReady again (e.g. after a cancelled countdown). */
-    reset() {
-      visibleSinceMs = null
-      lostSinceMs = null
-      fired = false
-    },
-  }
 }

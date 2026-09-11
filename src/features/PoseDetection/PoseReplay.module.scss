@@ -1,0 +1,91 @@
+@use '@/styles/util' as u;
+
+.videoWrap{
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 80vh;
+}
+
+.markerOverlay{
+  position: absolute;
+  inset: 0;
+  place-items: center;
+  pointer-events: none;
+}
+
+.rangeHighlight{
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  border-radius: 2px;
+  background-color: u.$color-secondary-500;
+  // opacity: 0.5;
+  pointer-events: none;
+}
+
+.marker{
+  position: absolute;
+  bottom: 42px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 8px;
+  border-radius: 6px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: u.$ds-subnav;
+  font-size: u.$sz-10-12;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+
+  &::after{
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--color-border);
+  }
+  &::before{
+    content: '';
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--card-bg);
+  }
+}
+
+.markerClose{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-dimmed);
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover{
+    background-color: var(--bg-hover);
+    color: var(--color-text);
+  }
+}
+
+.selectionValid{
+  color: var(--color-good);
+}
+
+.selectionInvalid{
+  color: var(--color-needs_improvement);
+}

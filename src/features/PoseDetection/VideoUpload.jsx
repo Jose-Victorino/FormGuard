@@ -9,7 +9,7 @@ import Button from '@/components/Button/Button'
 import s from './VideoUpload.module.scss'
 
 const ACCEPTED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg']
-const MAX_FILE_BYTES = 20 * 1024 * 1024 // 20MB
+const MAX_FILE_BYTES = 40 * 1024 * 1024 // 40MB
 const SAMPLE_FPS = 30
 
 /**
@@ -131,7 +131,7 @@ function VideoUpload() {
       return
     }
     if(file.size > MAX_FILE_BYTES){
-      setError('That video is too large — please keep it under 20MB.')
+      setError('That video is too large — please keep it under 40MB.')
       return
     }
 
@@ -204,15 +204,25 @@ function VideoUpload() {
     return () => setIsInputLocked?.(false)
   }, [isProcessing, setIsInputLocked])
 
+  const wrapperStyle = previewUrl ? {
+    width: 'fit-content',
+    maxWidth: '1200px',
+    maxHeight: '80vh',
+    marginInline: 'auto'
+  } : {
+    aspectRatio: '4 / 3',
+    width: 'min(100%, 1200px, calc(80vh * 4 / 3))'
+  }
+
   return (
     <>
       {error && <span className={s.error}>{error}</span>}
       {warning && <span className={s.warning}>{warning}</span>}
 
       <div className='flex j-center'>
-        <div className='pos-r' style={{ aspectRatio: '4 / 3', width: 'min(100%, 1200px, calc(80vh * 4 / 3))' }}>
+        <div className='flex pos-r' style={wrapperStyle}>
           {previewUrl
-            ? <video src={previewUrl} className='w-100' style={{ height: '100%' }} muted />
+            ? <video src={previewUrl} className='w-100' style={{maxWidth: '100%', maxHeight: '80vh', width: 'auto', height: 'auto'}} muted />
             : <div
                 className={cn(s.dropzone, { [s.dragging]: isDragging })}
                 onClick={openFilePicker}
@@ -222,12 +232,12 @@ function VideoUpload() {
                 onDrop={handleDrop}
               >
                 <span>{isDragging ? 'Drop to upload' : 'Click or drag a video here'}</span>
-                <span className={s.hint}>under 20MB</span>
+                <span className={s.hint}>under 40MB</span>
               </div>
           }
           {isProcessing &&
             <div className={s.progressOverlay}>
-              <span>Analyzing pose… {Math.round(progress * 100)}%</span>
+              <span>Extracting pose… {Math.round(progress * 100)}%</span>
               <div className={s.progressTrack}>
                 <div className={s.progressFill} style={{ width: `${Math.round(progress * 100)}%` }} />
               </div>
@@ -245,7 +255,6 @@ function VideoUpload() {
       <Button
         text={previewUrl ? 'Choose a different video' : 'Upload Video'}
         onClick={openFilePicker}
-        disabled={isProcessing}
         span
       />
     </>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Navigate, NavLink, useParams } from 'react-router'
-import { bucket, sessionHooks, userHooks } from '@/service/crudService'
+import { bucket, sessionHooks, userHooks, issueService, strengthService } from '@/service/crudService'
 import { UserAuth } from '@/hooks/useAuth'
 import cn from 'classnames'
 
@@ -10,47 +10,9 @@ import Loader from '@/components/Loader'
 import Button from '@/components/Button/Button'
 
 import { processRecording } from './util/poseProcessing'
+import { analyze } from './util/llmFeedback'
 
 import s from './Feedback.module.scss'
-
-const LLM_RESPONSE = {
-  skill_level: "Intermediate",
-  overall_assesment: "Needs Improvement",
-  feedback: "LLM feedback lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque. lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque.lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem.",
-  strengths: [
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione"
-    },
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-  ],
-  issues: [
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione"
-    },
-    {
-      "category": "",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-  ],
-  suggestions: [
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-  ],
-}
 
 function Feedback() {
   const { session_id } = useParams()
@@ -61,75 +23,157 @@ function Feedback() {
 
   const userId = authSession?.user?.id
 
-  // const { data: { data: sessionData } = {}, isLoading: isSessionLoading, isError: isSessionError } = sessionHooks.getById({ id: session_id })
-  // const { data: userRes, isLoading: isUserLoading } = userHooks.getById(
-  //   { column: 'id', id: userId },
-  //   { enabled: !!userId }
-  // )
-  // const racketSide = userRes?.data?.racket_side
+  const { data: { data: sessionData } = {}, isLoading: isSessionLoading, isError: isSessionError } = sessionHooks.getById({ id: session_id })
+  const { data: userRes, isLoading: isUserLoading } = userHooks.getById(
+    { column: 'id', id: userId },
+    { enabled: !!userId }
+  )
+  const racketSide = userRes?.data?.racket_side
 
-  // const { mutate: updateSession } = sessionHooks.updateData()
+  const { mutate: updateSession } = sessionHooks.updateData()
 
-  // const [stats, setStats] = useState(null)
+  const [results, setResults] = useState(null)
+  const [analysisFailed, setAnalysisFailed] = useState(false)
+  const [loadingStage, setLoadingStage] = useState('Analyzing pose')
+  // Tracks which session_id this component has already started analyzing.
+  // `sessionData` gets a new object reference every time `updateSession`
+  // below invalidates the `session` query, and effects also fire twice on
+  // mount under dev StrictMode — both would otherwise start (or think they
+  // need to cancel) a second `run()`. Checked at every await point inside
+  // `run()` too, so the one real run only bails out if the user genuinely
+  // navigates to a different session_id, not on either of those.
+  const analyzedSessionRef = useRef(null)
 
-  // const hasValidRacketSide = racketSide === 'left' || racketSide === 'right'
+  const hasValidRacketSide = racketSide === 'left' || racketSide === 'right'
 
-  // useEffect(() => {
-  //   if(!sessionData || !hasValidRacketSide) return
+  useEffect(() => {
+    if(!sessionData || !hasValidRacketSide) return
+    if(analyzedSessionRef.current === session_id) return
+    analyzedSessionRef.current = session_id
 
-  //   let cancelled = false
+    const run = async () => {
+      setLoadingStage('Analyzing pose')
+      const technique = sessionData.technique?.name?.toLocaleLowerCase()
+      const variation = sessionData.technique?.variation?.toLocaleLowerCase()
 
-  //   const run = async () => {
-  //     const result = await processRecording({
-  //       progressCallback: (pct, msg) => console.log(pct, msg),
-  //       videoUrl: sessionData.video_url,
-  //       landmarks: sessionData.frames ?? [],
-  //       technique: sessionData.technique?.name?.toLocaleLowerCase(),
-  //       racketSide,
-  //       debug: true
-  //     })
+      const result = await processRecording({
+        progressCallback: (pct, msg) => console.log(pct, msg),
+        videoUrl: sessionData.video_url,
+        landmarks: sessionData.frames ?? [],
+        technique,
+        variation,
+        racketSide,
+      })
 
-  //     if(cancelled) return
+      // Checked against the ref (not a per-invocation `cancelled` boolean)
+      // so this survives StrictMode's dev-only run→cleanup→run and the
+      // sessionData reference churn our own `updateSession` calls cause by
+      // invalidating the `session` query below — both would otherwise flip
+      // a naive `cancelled` flag mid-flight and abort this run before it
+      // ever reaches the avatar upload or `analyze()`. Only a genuine
+      // navigation to a different session_id changes the ref.
+      if(analyzedSessionRef.current !== session_id) return
 
-  //     // setStats(result)
-  //     console.log(result) //? next step, phase & debug response
+      // Persist the avatar the same way the video itself was persisted, so
+      // it survives past this browser session too instead of just living as
+      // an in-memory data URL.
+      console.log(sessionData, result)
+      if(result.avatarImage){
+        try{
+          const now = new Date().toLocaleString("en-US", {
+            timeZone: "Asia/Manila",
+            month: "numeric",
+            day: "numeric",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).replace(/[/:,\s]+/g, "-")
 
-  //     // Persist the avatar the same way the video itself was persisted, so
-  //     // it survives past this browser session too instead of just living as
-  //     // an in-memory data URL.
-  //     if(result.avatarImage){
-  //       try{
-  //         const avatarBlob = await (await fetch(result.avatarImage)).blob()
-  //         const fileName = `${userId}/${session_id}-thumbnail.jpg`
+          const avatarBlob = await (await fetch(result.avatarImage)).blob()
+          const fileName = `${userId}_${now}.jpg`
 
-  //         await bucket().upload(fileName, avatarBlob, { contentType: 'image/jpeg', upsert: true })
+          await bucket().upload(fileName, avatarBlob, { contentType: 'image/jpeg', upsert: true })
 
-  //         if(!cancelled)
-  //           updateSession({ payload: { thumbnail_url: bucket().getUrl(fileName) }, id: session_id })
-  //       } catch(err){
-  //         console.error('Failed to persist avatar thumbnail:', err)
-  //       }
-  //     }
-  //   }
+          if(analyzedSessionRef.current === session_id)
+            updateSession({
+              payload: {
+                thumbnail_url: bucket().getUrl(fileName),
+                thumbnail_path: fileName
+              },
+              id: session_id
+            })
+        } catch(err){
+          console.error('Failed to persist avatar thumbnail:', err)
+        }
+      }
 
-  //   run()
+      if(analyzedSessionRef.current !== session_id) return
+      setLoadingStage('Generating feedback')
+      const analysis = await analyze({ poseStats: result, technique, variation, racketSide })
+      
+      if(analyzedSessionRef.current !== session_id) return
 
-  //   return () => { cancelled = true }
-  // }, [sessionData, hasValidRacketSide, racketSide, userId, session_id, updateSession])
+      if(!analysis){
+        setAnalysisFailed(true)
+        return
+      }
 
-  // if(isSessionLoading || isUserLoading) return <Loader.Bar />
+      setResults(analysis)
 
-  // // Refetchable by ID, so this only happens for a bad/deleted session id
-  // if(isSessionError || !sessionData) return <Navigate to='/app' replace />
+      updateSession({
+        payload: {
+          skill_level: analysis.skill_level,
+          overall_assessment: analysis.overall_assessment,
+          feedback: analysis.feedback,
+          suggestions: JSON.stringify(analysis.suggestions ?? []),
+        },
+        id: session_id,
+      })
 
-  // if(!hasValidRacketSide) return (
-  //   <div>
-  //     <p>We need your racket side to analyze this session.</p>
-  //     <NavLink to='/app/profile' className='text-link'>Set it in your profile</NavLink>
-  //   </div>
-  // )
+      if(analysis.issues?.length){
+        issueService
+          .putData(analysis.issues.map(({ category, reason }) => ({ session_id, category, reason })))
+          .catch((err) => console.error('Failed to persist issue rows:', err))
+      }
 
-  const overallAssesment = LLM_RESPONSE.overall_assesment.replaceAll(' ', '_').toLocaleLowerCase()
+      if(analysis.strengths?.length){
+        strengthService
+          .putData(analysis.strengths.map(({ category, reason }) => ({ session_id, category, reason })))
+          .catch((err) => console.error('Failed to persist strength rows:', err))
+      }
+    }
+
+    run()
+  }, [sessionData, racketSide, updateSession])
+
+  if(isSessionLoading || isUserLoading) return <><Loader.Bar /></>
+
+  // Refetchable by ID, so this only happens for a bad/deleted session id
+  if(isSessionError || !sessionData) return <Navigate to='/app' replace />
+
+  if(!hasValidRacketSide) return (
+    <div>
+      <p>We need your racket side to analyze this session.</p>
+      <NavLink to='/app/profile' className='text-link'>Set it in your profile</NavLink>
+    </div>
+  )
+
+  if(analysisFailed) return (
+    <div>
+      <p>We couldn't generate feedback for this session. Please try again later.</p>
+      <NavLink to='/app' className='text-link'>Back to Dashboard</NavLink>
+    </div>
+  )
+
+  if(!results) return (
+    <div className={s.loadingWrap}>
+      <Loader.Bar />
+      <p className={s.loadingText}>{loadingStage}&hellip;</p>
+    </div>
+  )
+
+  const overallassessment = results.overall_assessment.replaceAll(' ', '_').toLocaleLowerCase()
 
   return (
     <main className='container-parent flex-col gap-15 pad-block-20'>
@@ -137,20 +181,22 @@ function Feedback() {
         <div className={cn('flex-col gap-20', s.left)}>
           <div className={s.card}>
             <h4>Session Complete</h4>
-            <div className='flex w-100' style={{ aspectRatio: '4 / 3', maxWidth: '100%'}}>
-              <video ref={videoRef} style={{ width: '100%', height: '100%' }} controls />
+            <div className='flex w-100' style={{maxWidth: '100%'}}>
+              <video ref={videoRef} src={sessionData.video_url} style={{ width: '100%', height: '100%' }} controls muted crossOrigin="anonymous" />
             </div>
             <div className='flex-col gap-15'>
               <div className='flex j-space-between'>
-                <span>Overall Assesment</span>
-                <span className={s[`badge-${overallAssesment}`]}>{LLM_RESPONSE.overall_assesment}</span>
+                <span>Overall assessment</span>
+                <span className={s[`badge-${overallassessment}`]}>{results.overall_assessment}</span>
               </div>
               <div className='flex j-space-between'>
                 <span>Skill Level</span>
-                <span className={s.skillBadge}>{LLM_RESPONSE.skill_level}</span>
+                <span className={s.skillBadge}>{results.skill_level}</span>
               </div>
             </div>
             <Button
+              role='link'
+              to='/app'
               text='Back to Dashboard'
               span
             />
@@ -158,11 +204,11 @@ function Feedback() {
         </div>
         <div className={s.card}>
           <h5>Feedback</h5>
-          <p className='text-justify'>{LLM_RESPONSE.feedback}</p>
+          <p className='text-justify'>{results.feedback}</p>
           <div className='flex-col gap-5'>
             <h6>✅ Strengths</h6>
             <ul className={cn('list-unordered', s.strength)}>
-              {LLM_RESPONSE.strengths.map(({ category, reason }, i) =>
+              {results.strengths.map(({ category, reason }, i) =>
                 <li key={`${category}-${i}`}>
                   {reason}
                 </li>
@@ -172,7 +218,7 @@ function Feedback() {
           <div className='flex-col gap-5'>
             <h6>‼️ Issues</h6>
             <ul className={cn('list-unordered', s.issue)}>
-              {LLM_RESPONSE.issues.map(({ category, reason }, i) =>
+              {results.issues.map(({ category, reason }, i) =>
                 <li key={`${category}-${i}`}>
                   {reason}
                 </li>
@@ -182,9 +228,9 @@ function Feedback() {
           <div className='flex-col gap-5'>
             <h6>ℹ️ Suggestions</h6>
             <ol className={cn('list-ordered', s.suggestion)}>
-              {LLM_RESPONSE.suggestions.map((s) =>
-                <li key={s}>
-                  {s}
+              {results.suggestions.map((suggestion, i) =>
+                <li key={i}>
+                  {suggestion}
                 </li>
               )}
             </ol>

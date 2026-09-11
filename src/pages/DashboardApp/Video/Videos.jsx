@@ -53,7 +53,7 @@ function Videos() {
     <>
       <div className='flex j-space-between gap-10'>
         <h3>Videos</h3>
-        <Input type='select' name='technique' value={technique} onChange={(e) => setTechnique(e.target.value)} options={techniqueOptions} />
+        {/* <Input type='select' name='technique' value={technique} onChange={(e) => setTechnique(e.target.value)} options={techniqueOptions} /> */}
       </div>
       <ul className={s.videoList}>
         {videosData.map((vid) => {

@@ -1,0 +1,36 @@
+@use '@/styles/util' as u;
+
+.tutorial{
+  display: flex;
+  gap: 20px;
+}
+
+.mainContent{
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.videoCont{
+  display: flex;
+  justify-content: center;
+  max-height: 320px;
+  width: 100%;
+
+  video{
+    height: auto;
+    width: auto;
+    max-height: 100%;
+    max-width: 100%;
+  }
+}
+
+@container dashboard-content (width < 720px){
+  .tutorial{
+    flex-direction: column;
+  }
+  .sidebar{
+    flex-grow: 1;
+    text-align: center;
+  }
+}
