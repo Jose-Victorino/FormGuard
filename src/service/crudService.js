@@ -254,7 +254,7 @@ export const issueService = createCRUD('issue')
 export const strengthService = createCRUD('strength')
 
 export const sessionService = createCRUD('session', {
-  defaultSelect: 'id, technique(id, name, variation), video_url, thumbnail_url, duration_seconds, skill_level, overall_assessment, feedback, suggestions, issue(id, reason), strength(id, reason), frames, created_at',
+  defaultSelect: '*, technique(id, name, variation), issue(id, reason), strength(id, reason)',
   extend: (base, crud) => ({
     getTrainingOverview: async () => {
       const result = await supabase

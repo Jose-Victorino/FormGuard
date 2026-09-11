@@ -127,6 +127,7 @@ function Feedback() {
           overall_assessment: analysis.overall_assessment,
           feedback: analysis.feedback,
           suggestions: JSON.stringify(analysis.suggestions ?? []),
+          status: 'complete',
         },
         id: session_id,
       })
@@ -148,9 +149,10 @@ function Feedback() {
   }, [sessionData, racketSide, updateSession])
 
   if(isSessionLoading || isUserLoading) return <><Loader.Bar /></>
-
-  // Refetchable by ID, so this only happens for a bad/deleted session id
-  if(isSessionError || !sessionData) return <Navigate to='/app' replace />
+  console.log(sessionData)
+  
+  // Refetchable by ID, so this only happens for a bad/deleted session id or completed session
+  if(isSessionError || !sessionData || sessionData?.status === 'complete') return <Navigate to='/app' replace />
 
   if(!hasValidRacketSide) return (
     <div>
