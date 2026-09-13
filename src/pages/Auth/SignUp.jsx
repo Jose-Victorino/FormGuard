@@ -56,7 +56,7 @@ function SignUp() {
       const { first_name, last_name, email, password } = values
       const firstName = wordCap(first_name)
       const lastName = wordCap(last_name)
-      
+
       setSubmitting(true)
       try{
         const res = await signUp(firstName, lastName, email, password)
@@ -74,6 +74,11 @@ function SignUp() {
       }
     },
   })
+  const testsub = () => {
+    toast.success('A confirmation email has been sent.')
+    navigate('/auth/login', { replace: true })
+
+  }
 
   return (
     <div className='flex-col gap-15 mb-30'>
@@ -91,10 +96,11 @@ function SignUp() {
           {error && <span className={s.errorMsg}>{error}</span>}
         </div>
         <Button
-          type='submit'
+          type='button'
           text={isSubmitting ? 'Loading...' : 'Sign up'}
           color='green'
           span
+          onClick={() => testsub()}
           disabled={isSubmitting}
         />
       </form>

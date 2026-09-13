@@ -125,6 +125,7 @@ function PoseReplay({ userId, techniqueData }) {
         video_path: videoFileName,
         duration_seconds: Math.round(recording.landmarks.at(-1)?.t ?? 0),
         frames: recording.landmarks,
+        status: 'pending_feedback',
       })
 
       navigate(`/app/feedback/${inserted.id}`)

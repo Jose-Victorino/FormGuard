@@ -48,6 +48,11 @@ function Feedback() {
 
   useEffect(() => {
     if(!sessionData || !hasValidRacketSide) return
+    // A session already marked complete (fresh visit via bookmark/back-
+    // button/direct link) must never re-enter the pipeline — this is the
+    // actual guard against double-generation; the ref below only covers
+    // this component instance re-running on the same still-pending session.
+    if(sessionData.status !== 'pending_feedback') return
     if(analyzedSessionRef.current === session_id) return
     analyzedSessionRef.current = session_id
 
@@ -77,7 +82,6 @@ function Feedback() {
       // Persist the avatar the same way the video itself was persisted, so
       // it survives past this browser session too instead of just living as
       // an in-memory data URL.
-      console.log(sessionData, result)
       if(result.avatarImage){
         try{
           const now = new Date().toLocaleString("en-US", {
@@ -148,11 +152,20 @@ function Feedback() {
     run()
   }, [sessionData, racketSide, updateSession])
 
-  if(isSessionLoading || isUserLoading) return <><Loader.Bar /></>
-  console.log(sessionData)
+  if(isSessionLoading || isUserLoading) return <Loader.Bar />
   
-  // Refetchable by ID, so this only happens for a bad/deleted session id or completed session
-  if(isSessionError || !sessionData || sessionData?.status === 'complete') return <Navigate to='/app' replace />
+  // Refetchable by ID, so this only happens for a bad/deleted session id
+  if(isSessionError || !sessionData) return <Navigate to='/app' replace />
+  // A fresh visit to an already-complete session (bookmark, back button,
+  // direct link) redirects to the read-only feedback view instead of
+  // re-entering the pipeline — the session's feedback was already
+  // persisted, so there's no need to regenerate it just to display it.
+  // This must NOT fire for the session this component itself just
+  // finished — `results` is set locally before the `status: 'complete'`
+  // update round-trips back into the query cache, so checking `!results`
+  // here is what keeps the just-generated feedback on screen instead of
+  // bouncing the user off it the instant it completes.
+  if(sessionData.status === 'complete' && !results) return <Navigate to={`/app/video/${session_id}`} replace />
 
   if(!hasValidRacketSide) return (
     <div>

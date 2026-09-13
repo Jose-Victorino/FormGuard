@@ -27,7 +27,6 @@ const PAGE_NAME = 'Login'
 
 function Login() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { signIn } = UserAuth()
 
@@ -39,10 +38,10 @@ function Login() {
       password: '',
     },
     validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setSubmitting }) => {
       const { email, password } = values
-      setLoading(true)
-      
+
+      setSubmitting(true)
       try{
         const res = await signIn(email, password)
         
@@ -52,7 +51,7 @@ function Login() {
         console.error(error)
         setError('an error occured')
       } finally{
-        setLoading(false)
+        setSubmitting(false)
       }
     },
   })
@@ -62,7 +61,7 @@ function Login() {
       <GoBackButton />
       <form className={s.form} onSubmit={handleSubmit}>
         <h4>Login</h4>
-        <div className='flex-col gap-5'>
+        <div className='flex-col gap-15'>
           <Input type='email' name='email' value={values.email} error={errors.email} onChange={handleChange} placeholder='Email' required/>
           <Input type='password' name='password' value={values.password} error={errors.password} onChange={handleChange} placeholder='Password' required/>
           {error && <span className={s.errorMsg}>{error}</span>}
@@ -72,7 +71,7 @@ function Login() {
         </div>
         <Button
           type='submit'
-          text={(isSubmitting && loading) ? 'Loading...' : 'Login'}
+          text={(isSubmitting) ? 'Loading...' : 'Login'}
           color='green'
           span
           disabled={isSubmitting}

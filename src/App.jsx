@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { UserAuth } from './hooks/useAuth'
 import { userHooks } from './service/crudService'
+import { ToastContainer } from './components/Toast'
 
 import { dashboardRoutes } from './routes/dashboard'
 import { landingRoutes } from './routes/landing'
@@ -22,7 +23,12 @@ function App() {
 
   userHooks.prefetchById({ column: 'id', id: userId })
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <ToastContainer />
+      <RouterProvider router={router} />
+    </>
+  )
 }
 
 export default App

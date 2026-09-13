@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import cn from 'classnames'
 
 import s from './Input.module.scss'
@@ -38,7 +39,6 @@ const hasInputValue = (value) => {
  *  placeholder?: string,
  *  required?: boolean,
  *  error?: string | string[],
- *  touched?: boolean,
  *  displayName?: string,
  *  labelOutside?: boolean,
  *  span?: 'true' | 'false',
@@ -66,7 +66,7 @@ const hasInputValue = (value) => {
  *  options: Record<string | number, string>
  * }} SelectProps
  * 
- * @typedef {CommonProps & {
+ * @typedef {CommonProps & React.InputHTMLAttributes<HTMLInputElement> & {
  *  type: 'multiselect',
  *  value: String[],
  *  options: Record<string, string>
@@ -78,17 +78,22 @@ const hasInputValue = (value) => {
  * @param {InputProps} props
  */
 function Input(props) {
-  const { error, touched = true, id, displayName, placeholder, labelOutside = false, span = 'false', ...rest } = props
+  const { error, id, displayName, placeholder, labelOutside = false, span = 'false', onBlur, ...rest } = props
+  const [showError, setShowError] = useState(false)
 
   if(['image', 'checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color'].includes(props.type)) return null
 
   const inputId = id ?? props.name
-  const showError = Boolean(error && touched)
   const errorId = showError ? `${inputId}-error` : undefined
   const isFloatingLabelTop = hasInputValue(props.value) || ['date', 'time', 'file'].includes(props.type)
 
+  const handleBlur = (e) => {
+    setShowError(Boolean(error))
+    onBlur?.(e)
+  }
+
   return (
-    <div className={cn('flex-col gap-5', s.inputCont, { [s.toTop]: isFloatingLabelTop, [s.span]: span === 'true' })}>
+    <div className={cn('flex-col gap-5', s.inputCont, { [s.toTop]: isFloatingLabelTop, [s.span]: props.span === 'true' })}>
       <div className='pos-r flex-col'>
         {displayName &&
           <span className={cn(s.textLabel, { [s.labelInside]: !labelOutside})}>
@@ -104,6 +109,7 @@ function Input(props) {
             id={inputId}
             placeholder={((labelOutside && displayName) || !displayName) ? placeholder : null}
             className={cn({ [s.error]: showError })}
+            onBlur={handleBlur}
             aria-invalid={showError}
             aria-describedby={errorId}
           />
