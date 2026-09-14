@@ -114,7 +114,7 @@ function Feedback() {
 
       if(analyzedSessionRef.current !== session_id) return
       setLoadingStage('Generating feedback')
-      const analysis = await analyze({ poseStats: result, technique, variation, racketSide })
+      const analysis = await analyze({ poseStats: result, technique, variation, racketSide, name: authSession?.user?.user_metadata?.first_name })
       
       if(analyzedSessionRef.current !== session_id) return
 

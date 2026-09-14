@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router'
 import { useSessionContext } from './SessionLayout'
 import { bucket, sessionHooks } from '@/service/crudService'
 
-import Button from '@/components/Button/Button'
 import { processRecording } from './util/poseProcessing'
+import { buildPrompt } from './util/llmFeedback'
+
+import Button from '@/components/Button/Button'
 
 import s from './PoseReplay.module.scss'
-import { analyze } from './util/llmFeedback'
+
+const ENV = import.meta.env.VITE_ENV
 
 function PoseReplay({ userId, techniqueData }) {
   const navigate = useNavigate()
@@ -33,6 +36,8 @@ function PoseReplay({ userId, techniqueData }) {
     const video = videoRef.current
     video.currentTime = seconds
   }
+
+  const { id: techniqueId, name: technique, variation } = techniqueData
 
   // Full recorded range, in landmark-clock seconds (same `t` used to filter
   // frames below).
@@ -120,7 +125,7 @@ function PoseReplay({ userId, techniqueData }) {
 
       const { data: [inserted] } = await createSession({
         user_id: userId,
-        technique_id: techniqueData.id,
+        technique_id: techniqueId,
         video_url: videoUrl,
         video_path: videoFileName,
         duration_seconds: Math.round(recording.landmarks.at(-1)?.t ?? 0),
@@ -140,12 +145,20 @@ function PoseReplay({ userId, techniqueData }) {
       const result = await processRecording({
         videoUrl: recording.videoUrl,
         landmarks: trimmedLandmarks,
-        technique: techniqueData.name.toLowerCase(),
-        variation: techniqueData.variation.toLowerCase(),
+        technique: technique.toLowerCase(),
+        variation: variation.toLowerCase(),
         racketSide: 'right',
         debug: true
       })
+      const prompt = buildPrompt({
+        poseStats: result,
+        racketSide: 'right',
+        technique: technique.toLowerCase(),
+        variation: variation.toLowerCase(),
+        name: 'jose'
+      })
       console.log(result)
+      console.log(prompt)
       setRes(result)
     } catch(err){}
   }
@@ -254,22 +267,26 @@ function PoseReplay({ userId, techniqueData }) {
           span
           disabled={isSubmitting || !hasValidTrim}
         />
-        {/* <Button
-          text='Get Stats'
-          onClick={() => getStats()}
-          disabled={!hasValidTrim}
-        /> */}
+        {ENV === 'development' &&
+          <Button
+            text='Get Stats'
+            onClick={() => getStats()}
+            disabled={!hasValidTrim}
+          />
+        }
       </div>
-      {/* <ul className='flex-wrap gap-10'>
-        {res?.phases.map(({t, label}) =>
-          <li key={label}>
-            <Button
-              text={`${label.replaceAll('_', ' ')}: ${t.toFixed(2)}s`}
-              onClick={() => jumpVideoTime(t)}
-            />
-          </li>
-        )}
-      </ul> */}
+      {ENV === 'development' &&
+        <ul className='flex-wrap gap-10'>
+          {res?.phases.map(({t, label}) =>
+            <li key={label}>
+              <Button
+                text={`${label.replaceAll('_', ' ')}: ${t.toFixed(2)}s`}
+                onClick={() => jumpVideoTime(t)}
+              />
+            </li>
+          )}
+        </ul>
+      }
       {submitError && <span>{submitError}</span>}
     </>
   )

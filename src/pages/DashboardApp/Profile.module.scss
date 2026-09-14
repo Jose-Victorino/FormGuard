@@ -3,3 +3,8 @@
 .toggle{
   @include u.toggle-switch;
 }
+
+.panel{
+  @include u.statCard;
+  gap: 15px;
+}

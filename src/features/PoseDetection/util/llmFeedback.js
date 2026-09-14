@@ -2,8 +2,9 @@ import { OpenRouter } from '@openrouter/sdk'
 
 import { REFERENCES } from './references'
 
-const model = import.meta.env.VITE_LLM_MODEL
-const apiKey = import.meta.env.VITE_API_KEY
+const MODEL = import.meta.env.VITE_LLM_MODEL
+const API_KEY = import.meta.env.VITE_API_KEY
+const ENV = import.meta.env.VITE_ENV
 
 /**
  * @typedef {import('./poseProcessing').PoseStats} PoseStats
@@ -18,6 +19,7 @@ const apiKey = import.meta.env.VITE_API_KEY
  *  technique: string,
  *  variation: string,
  *  racketSide: string,
+ *  name: string,
  * }} SessionInfo
  * @typedef {{
  *  skill_level: 'Beginner' | 'Intermediate' | 'Expert',
@@ -29,7 +31,7 @@ const apiKey = import.meta.env.VITE_API_KEY
  * }} Response
  */
 
-const openRouter = new OpenRouter({ apiKey })
+const openRouter = new OpenRouter({ apiKey: API_KEY })
 
 export const TECHNIQUE_ISSUES = {
   serve: [
@@ -352,7 +354,7 @@ function _renderMeasurementBlock(poseStats){
  * @param {SessionInfo} sessionInfo
  * @returns {{system: string, user: string}}
  */
-function buildPrompt({ poseStats, technique, variation, racketSide }){
+export function buildPrompt({ poseStats, technique, variation, racketSide, name }){
   const { analyzedSamples, duration } = poseStats
   const key = `${technique}.${variation}`
 
@@ -363,6 +365,7 @@ function buildPrompt({ poseStats, technique, variation, racketSide }){
 
   const overviewBlock = [
     '## Athlete',
+    ...(name ? [`- name: ${name}`] : []),
     '### Video Overview',
     `- Number of analyzed samples: ${analyzedSamples}`,
     `- Video Duration: ${duration} seconds`,
@@ -402,7 +405,7 @@ function buildPrompt({ poseStats, technique, variation, racketSide }){
     '- **Never** mention any angles anywhere.',
     "- **Never** mention 'expert' anywhere.",
     '- **Avoid** using big and profound words, keep it simple and understandable',
-    '- When referencing a specific moment use the timestamp in seconds only (ex. "at 10 seconds into the video").',
+    '- **Do not* use any timestamps when referencing a specific moment.',
     '- Prefer describing movement patterns over single-snapshot observations whenever possible.',
   ].join('\n')
 
@@ -420,7 +423,10 @@ function buildPrompt({ poseStats, technique, variation, racketSide }){
 
   const jsonBlock = [
     '### JSON response',
-    "ONLY return the following JSON — don't include any extra text, Markdown, line breaks, or explanations:",
+    ENV === 'development'
+      ? '- ONLY return the following JSON and a reasoning for the response (debugging purposes):'
+      : "ONLY return the following JSON — don't include any extra text, Markdown, line breaks, or explanations:"
+    ,
     JSON.stringify({
       skill_level: '<Beginner | Intermediate | Expert>',
       overall_assessment: '<Excellent | Good | Needs Improvement>',
@@ -479,46 +485,6 @@ function _sanitizeResult(result, technique){
   }
 }
 
-/** @type {Response} */
-const LLM_RESPONSE = {
-  skill_level: "Intermediate",
-  overall_assessment: "Needs Improvement",
-  feedback: "LLM feedback lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque. lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem eligendi sit voluptatibus ducimus a rem neque.lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae mollitia? Corrupti corporis dicta minus ipsum quia eaque pariatur facilis dignissimos repellat minima magni dolores aut quod voluptate inventore voluptatum, dolor fugiat. In, itaque excepturi nam provident consequuntur fugiat mollitia voluptatem.",
-  strengths: [
-    {
-      "category": "powerful_smash",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-    {
-      "category": "good_wrist_control",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione"
-    },
-    {
-      "category": "good_shoulder_rotation",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-  ],
-  issues: [
-    {
-      "category": "unstable_posture",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-    {
-      "category": "poor_timing",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione"
-    },
-    {
-      "category": "weak_torso_rotation",
-      "reason": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-    },
-  ],
-  suggestions: [
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione",
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic ratione debitis recusandae"
-  ],
-}
-
 /**
  * Runs the full coaching-feedback step for one session: builds the prompt
  * from `poseStats` (+ expert reference, when available), sends it to the
@@ -537,12 +503,15 @@ export async function analyze(sessionInfo){
   try{
     const result = await openRouter.chat.send({
       chatRequest: {
-        model,
+        model: MODEL,
         messages: [
           { role: 'system', content: prompt.system },
           { role: 'user', content: prompt.user },
         ],
         stream: false,
+        // reasoning: {
+        //   effort: 'medium',
+        // }
       },
     })
 
