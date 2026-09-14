@@ -77,7 +77,6 @@ function SignUp() {
   const testsub = () => {
     toast.success('A confirmation email has been sent.')
     navigate('/auth/login', { replace: true })
-
   }
 
   return (
@@ -96,11 +95,10 @@ function SignUp() {
           {error && <span className={s.errorMsg}>{error}</span>}
         </div>
         <Button
-          type='button'
+          type='submit'
           text={isSubmitting ? 'Loading...' : 'Sign up'}
           color='green'
           span
-          onClick={() => testsub()}
           disabled={isSubmitting}
         />
       </form>
