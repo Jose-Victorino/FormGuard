@@ -56,12 +56,12 @@ function Login() {
       <GoBackButton />
       <form className={s.form} onSubmit={handleSubmit}>
         <h4>Login</h4>
-        <div className='flex-col gap-15'>
-          <Input type='email' name='email' value={values.email} error={errors.email} onChange={handleChange} placeholder='Email' required/>
-          <Input type='password' name='password' value={values.password} error={errors.password} onChange={handleChange} placeholder='Password' required/>
-          {error && <span className={s.errorMsg}>{error}</span>}
-        </div>
-        <div className='flex-wrap j-space-between gap-10'>
+        <div className='flex-col gap-5'>
+          <div className='flex-col gap-15'>
+            <Input type='email' name='email' value={values.email} error={errors.email} onChange={handleChange} placeholder='Email' required/>
+            <Input type='password' name='password' value={values.password} error={errors.password} onChange={handleChange} placeholder='Password' required/>
+            {error && <span className={s.errorMsg}>{error}</span>}
+          </div>
           <NavLink to='/auth/forgot-password' className='text-link'>Forgot your password?</NavLink>
         </div>
         <Button

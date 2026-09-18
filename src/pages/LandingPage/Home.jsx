@@ -2,6 +2,7 @@ import Button from '@/components/Button/Button'
 
 import s from './Home.module.scss'
 
+import preview from '@/assets/images/preview.png'
 import expertSnapshot from '@/assets/images/landing_expert_snapshot.png'
 import userSnapshot from '@/assets/images/landing_user_snapshot.png'
 import cta from '@/assets/images/cta.jpg'
@@ -16,8 +17,8 @@ function Home() {
     <>
       <section className={s.hero}>
         <div className='container'>
-          <div className='flex-col gap-15'>
-            <div>
+          <div className='flex-col gap-15 pos-r' style={{ zIndex: 1 }}>
+            <div className={s.content}>
               <h3>AI-Powered E-coaching Badminton Platform using <span>Pose Comparison</span></h3>
               <p>Correct your badminton form using video and pose analysis. Record your training and get a clear coaching response.</p>
             </div>
@@ -28,6 +29,9 @@ function Home() {
               to='/auth/login'
               size='lg'
             />
+          </div>
+          <div className={s.appPreview}>
+            <img src={preview} alt='preview' />
           </div>
         </div>
       </section>

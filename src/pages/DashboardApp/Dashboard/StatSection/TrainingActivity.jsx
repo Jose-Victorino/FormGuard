@@ -55,7 +55,7 @@ function TrainingActivity() {
       </div>
       <div className={s.streak}>
         <h6>Training Streak</h6>
-        <p>{data?.current_streak} Days🔥</p>
+        <p>{`${data?.current_streak} Days🔥`}</p>
         {data?.longest_streak > 0 && <span>{`Best: ${data.longest_streak}`}</span>}
       </div>
       <div className={s.trainingTime}>

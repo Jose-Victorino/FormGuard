@@ -52,7 +52,7 @@ createRoot(document.getElementById('root')).render(
   withProviders(providers,
     <>
       <App />
-      <ReactQueryDevtools buttonPosition='bottom-left'/>
+      {/* <ReactQueryDevtools buttonPosition='bottom-left'/> */}
     </>
   )
 )
