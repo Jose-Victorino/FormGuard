@@ -46,7 +46,9 @@ import { supabase } from '@/service/crudService'
  * }>}
  */
 const AuthContext = createContext(null)
-const appURL = window.location.origin
+const appURL = typeof window !== 'undefined' 
+  ? window.location.origin 
+  : import.meta.env.VITE_SITE_URL
 
 const passwordRecoverLink = `${appURL}/auth/recover`
 
@@ -156,6 +158,7 @@ export function AuthContextProvider({children}){
             first_name,
             last_name
           },
+          emailRedirectTo: `${appURL}/app`
         },
       })
       if(error){

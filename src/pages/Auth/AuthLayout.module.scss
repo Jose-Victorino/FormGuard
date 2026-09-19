@@ -9,10 +9,21 @@
 }
 
 .bg{
-  background: u.$color-neutral-700;
+  background-color: u.$color-neutral-950;
+  background-image: url('@/assets/images/subtle-carbon.png');
+  position: relative;
   display: flex;
-  justify-content: center;
   flex: 0 0 60%;
+  box-shadow: inset 5px 0 20px 3px u.$color-primary-500;
+
+  img{
+    position: absolute;
+    top: 30px;
+    left: 50px;
+    max-width: calc(100% - 40px);
+    aspect-ratio: 1;
+    width: 180px;
+  }
 }
 
 .auth{
@@ -22,4 +33,33 @@
   justify-content: center;
   flex: 0 0 40%;
   padding: 20px;
+}
+
+@include u.breakpoint(tablet-s){
+  .bg, auth{
+    flex: unset;
+  }
+  .bg{
+    width: 100%;
+    box-shadow: inset 0 0px 15px 0 u.$color-primary-500;
+
+    img{
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+  .auth{
+    position: absolute;
+    bottom: 50%;
+    right: 50%;
+    transform: translate(50%, 50%);
+    border-radius: 12px;
+    width: 78%;
+  }
+}
+
+@include u.breakpoint(mobile-s){
+  .auth{
+    width: calc(100% - 30px);
+  }
 }

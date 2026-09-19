@@ -3,6 +3,8 @@ import { UserAuth } from '@/hooks/useAuth'
 
 import s from './AuthLayout.module.scss'
 
+import logo from '/Logo.png'
+
 function AuthLayout() {
   const { session } = UserAuth()
   const { pathname } = useLocation()
@@ -12,7 +14,9 @@ function AuthLayout() {
 
   return (
     <section className={s.authWrapper}>
-      <div className={s.bg}></div>
+      <div className={s.bg}>
+        <img src={logo} alt="Logo" />
+      </div>
       <div className={s.auth}>
         <Outlet />
       </div>
